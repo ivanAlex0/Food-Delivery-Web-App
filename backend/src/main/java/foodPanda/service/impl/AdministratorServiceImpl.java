@@ -3,15 +3,9 @@ package foodPanda.service.impl;
 import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
 import foodPanda.exception.ResourceNotFoundException;
-import foodPanda.model.Administrator;
-import foodPanda.model.Category;
+import foodPanda.model.*;
 import foodPanda.model.DTOs.AdminDTO;
-import foodPanda.model.Food;
-import foodPanda.model.Restaurant;
-import foodPanda.repository.AdministratorRepository;
-import foodPanda.repository.CategoryRepository;
-import foodPanda.repository.FoodRepository;
-import foodPanda.repository.RestaurantRepository;
+import foodPanda.repository.*;
 import foodPanda.service.services.AdministratorService;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
@@ -35,6 +29,9 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ZoneRepository zoneRepository;
 
     @Override
     public Administrator saveAdministrator(Administrator administrator) throws InvalidInputException {
@@ -84,10 +81,11 @@ public class AdministratorServiceImpl implements AdministratorService {
                                 .location(restaurant.getLocation())
                                 .locationZone(restaurant.getLocationZone())
                                 .deliveryZones(restaurant.getDeliveryZones())
+                                .administrator(_admin)
                                 .build()
                 );
-                _admin.setRestaurant(_restaurant);
-                administratorRepository.save(_admin);
+                //_admin.setRestaurant(_restaurant);
+                //administratorRepository.save(_admin);
                 return _restaurant;
             }
         }
@@ -112,10 +110,6 @@ public class AdministratorServiceImpl implements AdministratorService {
                             .build()
             );
         }
-    }
-
-    public List<Food> fetchMenu(Long adminId) throws RuntimeException {
-        return getCurrentAdmin(adminId).getRestaurant().getMenu();
     }
 
     public List<Category> fetchAllCategories() {

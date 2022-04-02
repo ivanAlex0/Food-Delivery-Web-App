@@ -35,10 +35,12 @@ public class Restaurant {
     @OneToMany
     private List<Zone> deliveryZones;
 
-    @JsonIgnore
     @OneToOne(mappedBy = "restaurant")
+    private Menu menu;
+
+    @JsonIgnore
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "admin_id", nullable = false)
     private Administrator administrator;
 
-    @OneToMany(mappedBy = "restaurant")
-    private List<Food> menu;
 }

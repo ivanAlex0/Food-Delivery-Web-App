@@ -19,10 +19,14 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "category_generator")
     private Long categoryId;
 
-    @Column(unique = true, nullable = false)
-    private String name;
+    @NonNull
+    private CategoryType category;
 
     @JsonIgnore
     @OneToMany(mappedBy = "category")
     private List<Food> foodList;
+
+    @ManyToOne
+    private Menu menu;
+
 }

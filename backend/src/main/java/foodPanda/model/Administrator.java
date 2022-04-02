@@ -26,7 +26,6 @@ public class Administrator {
     @NonNull
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "restaurant_id", referencedColumnName = "restaurantId")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "administrator")
     Restaurant restaurant;
 }

@@ -2,12 +2,10 @@ package foodPanda.controller;
 
 import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
-import foodPanda.model.Administrator;
-import foodPanda.model.Category;
+import foodPanda.model.*;
 import foodPanda.model.DTOs.AdminDTO;
-import foodPanda.model.Food;
-import foodPanda.model.Restaurant;
 import foodPanda.service.impl.AdministratorServiceImpl;
+import foodPanda.service.impl.ZoneServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,18 +14,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin")
 public class AdministratorController {
 
     @Autowired
     private AdministratorServiceImpl administratorServiceImpl;
 
+    @Autowired
+    private ZoneServiceImpl zoneServiceImpl;
+
     /**
      * @param administrator The administrator to be saved
      * @return A ResponseEntity object with the newly created Administrator(HTTPStatus.CREATED) or an error otherwise
      */
-    @PostMapping("save")
-    public ResponseEntity<Administrator> saveAdministrator(@RequestBody Administrator administrator) throws InvalidInputException {
+    @PostMapping("register")
+    public ResponseEntity<Administrator> register(@RequestBody Administrator administrator) throws InvalidInputException {
         return new ResponseEntity<>(administratorServiceImpl.saveAdministrator(administrator), HttpStatus.CREATED);
     }
 
@@ -47,14 +48,9 @@ public class AdministratorController {
 
     }
 
-    @GetMapping("fetchMenu")
-    public ResponseEntity<List<Food>> fetchMenu(@RequestParam(name = "adminId") long adminId) {
-        return new ResponseEntity<>(administratorServiceImpl.fetchMenu(adminId), HttpStatus.OK);
-    }
-
-    @GetMapping("fetchCategories")
-    public ResponseEntity<List<Category>> fetchCategories() {
-        return new ResponseEntity<>(administratorServiceImpl.fetchAllCategories(), HttpStatus.OK);
+    @GetMapping("fetchZones")
+    public ResponseEntity<APIResponse<Zone>> fetchCategories() {
+        return new ResponseEntity<>(APIResponse.<Zone>builder().response(zoneServiceImpl.fetchAll()).build(), HttpStatus.OK);
     }
 
 
