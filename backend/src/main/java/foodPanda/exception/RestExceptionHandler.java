@@ -27,4 +27,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<APIError> handleRuntimeException(RuntimeException ex, WebRequest webRequest) {
         return new ResponseEntity<>(new APIError(HttpStatus.UNAUTHORIZED, ex, webRequest), HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<APIError> handleRuntimeException(Exception ex, WebRequest webRequest) {
+        return new ResponseEntity<>(new APIError(HttpStatus.BANDWIDTH_LIMIT_EXCEEDED, ex, webRequest), HttpStatus.UNAUTHORIZED);
+    }
 }

@@ -26,6 +26,8 @@ public class Administrator {
     @NonNull
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "administrator")
+    @OneToOne(cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            mappedBy = "administrator")
     Restaurant restaurant;
 }

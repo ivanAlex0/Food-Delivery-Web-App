@@ -5,6 +5,7 @@ import foodPanda.exception.InvalidInputException;
 import foodPanda.model.*;
 import foodPanda.model.DTOs.AdminDTO;
 import foodPanda.service.impl.AdministratorServiceImpl;
+import foodPanda.service.impl.RestaurantServiceImpl;
 import foodPanda.service.impl.ZoneServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,9 @@ public class AdministratorController {
 
     @Autowired
     private ZoneServiceImpl zoneServiceImpl;
+
+    @Autowired
+    private RestaurantServiceImpl restaurantServiceImpl;
 
     /**
      * @param administrator The administrator to be saved
@@ -43,13 +47,17 @@ public class AdministratorController {
     }
 
     @PostMapping("addFood")
-    public ResponseEntity<Food> addFood(@RequestParam(name = "id") long adminId, @RequestBody Food food) throws InvalidInputException {
-        return new ResponseEntity<>(administratorServiceImpl.addFoodForCategory(adminId, food), HttpStatus.CREATED);
+    public ResponseEntity<Food> addFood(@RequestParam(name = "categoryId", required = false) Long categoryId, @RequestBody(required = false) Food food) {
+        return new ResponseEntity<>(administratorServiceImpl.addFoodForCategory(categoryId, food), HttpStatus.CREATED);
+    }
 
+    @GetMapping("fetchMenu")
+    public ResponseEntity<Menu> fetchMenu(@RequestParam(name = "restaurantId", required = true) Long restaurantId) throws RuntimeException {
+        return new ResponseEntity<>(restaurantServiceImpl.fetchMenu(restaurantId), HttpStatus.OK);
     }
 
     @GetMapping("fetchZones")
-    public ResponseEntity<APIResponse<Zone>> fetchCategories() {
+    public ResponseEntity<APIResponse<Zone>> fetchZones() {
         return new ResponseEntity<>(APIResponse.<Zone>builder().response(zoneServiceImpl.fetchAll()).build(), HttpStatus.OK);
     }
 

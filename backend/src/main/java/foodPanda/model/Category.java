@@ -22,11 +22,12 @@ public class Category {
     @NonNull
     private CategoryType category;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "category")
     private List<Food> foodList;
 
-    @ManyToOne
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
+    @JoinColumn(name = "menu_id")
     private Menu menu;
 
 }

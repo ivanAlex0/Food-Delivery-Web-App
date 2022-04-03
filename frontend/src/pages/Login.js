@@ -1,37 +1,37 @@
 import React, {useState} from "react";
-import {useNavigate,} from "react-router-dom";
+import {sendLogin} from "../api/adminAPI";
+import {useNavigate} from "react-router-dom";
 
 function Login() {
     localStorage.clear();
-    const [credential, setCredential] = useState("")
-    const [password, setPassword] = useState("")
-    const [errorMessage, setErrorMessage] = useState("")
-    let navigate = useNavigate();
+    const navigate = useNavigate();
+    const [login, setLogin] = useState({
+        credential: '',
+        password: ''
+    });
+    const [error, setError] = useState('');
 
-    async function login() {
-        let item = {credential, password}
-        let result = await fetch('http://localhost:8080/api/admin/auth',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(item),
-            }).catch((error) => {
-            setErrorMessage(error)
-        });
+    function handleChange(event) {
+        const {name, value} = event.target
+        setLogin(prevState => {
+            return {
+                ...prevState,
+                [name]: value
+            };
+        })
+    }
 
-        result = await result.json();
-        if (!result.message) {
-            localStorage.setItem('admin-info', JSON.stringify(result))
-            if (result.restaurant)
-                navigate('/admin')
-            else
-                navigate('/addRestaurant')
-        } else {
-            setErrorMessage(result.message)
-        }
+    function submit() {
+        sendLogin(login)
+            .then(adminData => {
+                localStorage.setItem('admin-info', JSON.stringify(adminData))
+                if(adminData.restaurant)
+                    navigate("/adminHome");
+                else navigate("/addRestaurant")
+            })
+            .catch(error => {
+                setError(error.response.data.message)
+            });
     }
 
     return (
@@ -40,20 +40,33 @@ function Login() {
 
             <h1>Login Page admin</h1>
 
-            <div className='col-sm-6 offset-sm-3'>
-                <input type={'text'} placeholder={'email'} className={'form-control'}
-                       onChange={(e) => setCredential(e.target.value)}/>
+            <div
+                className='col-sm-6 offset-sm-3'>
+                <input
+                    name={'credential'}
+                    type={'text'}
+                    placeholder={'email'}
+                    onChange={handleChange}
+                />
                 <br/>
 
-                <input type={'password'} placeholder={'password'} className={'form-control'}
-                       onChange={(e) => setPassword(e.target.value)}/>
+                <input
+                    name={'password'}
+                    type={'password'}
+                    placeholder={'password'}
+                    onChange={handleChange}
+                />
                 <br/>
 
-                <button onClick={login} className={'btn btn-primary'}>Login</button>
+                <button
+                    className={'btn btn-primary'}
+                    onClick={submit}>
+                    Login
+                </button>
 
-                <h1>
-                    {errorMessage}
-                </h1>
+                <h2>
+                    {error}
+                </h2>
 
             </div>
         </div>

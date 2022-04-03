@@ -21,12 +21,14 @@ public class Food {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "category_id", referencedColumnName = "categoryId")
-    private Category category;
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "price")
+    private Float price;
 
     @JsonIgnore
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "restaurant_id", referencedColumnName = "restaurantId")
-    private Restaurant restaurant;
+    @JoinColumn(name = "category_id", referencedColumnName = "categoryId")
+    private Category category;
 }

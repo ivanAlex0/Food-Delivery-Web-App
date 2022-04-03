@@ -21,6 +21,6 @@ public interface AdministratorService {
 
     Restaurant addRestaurant(Long adminId, Restaurant restaurant);
 
-    Food addFoodForCategory(Long adminId, Food food);
+    Food addFoodForCategory(Long categoryId, Food food);
 
 }

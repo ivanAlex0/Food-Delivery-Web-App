@@ -2,6 +2,7 @@ package foodPanda.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.util.List;
@@ -30,16 +31,19 @@ public class Restaurant {
     private String location;
 
     @ManyToOne
+    @JoinColumn(name = "locationZone_id")
     private Zone locationZone;
 
     @OneToMany
     private List<Zone> deliveryZones;
 
-    @OneToOne(mappedBy = "restaurant")
+    @OneToOne(cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY,
+            mappedBy = "restaurant")
     private Menu menu;
 
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "admin_id", nullable = false)
     private Administrator administrator;
 

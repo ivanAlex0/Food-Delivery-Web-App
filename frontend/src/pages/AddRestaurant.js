@@ -2,6 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {Button} from "react-bootstrap";
 import {addRestaurant, fetchZones} from "../api/adminAPI";
+import Select from "react-select";
 
 function get(key) {
     let admin_info = localStorage.getItem(key);
@@ -10,19 +11,32 @@ function get(key) {
 
 function AddRestaurant() {
     const navigate = useNavigate();
-    const admin = get('admin-info');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [admin = {
+        adminId: '',
+        email: '',
+        restaurant: ''
+    }, setAdmin] = useState(get('admin-info'));
     const [restaurant, setRestaurant] = useState({
-        'name': '',
-        'location': '',
-        'locationZone': {
-            'id': ''
+        name: '',
+        location: '',
+        locationZone: {
+            id: ''
         }
     });
     const [zones, setZones] = useState([]);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        fetchZones(setZones)
+        if (!admin)
+            navigate('/register')
+
+        fetchZones()
+            .then(response => {
+                setZones(response)
+            })
+            .catch(error => {
+                setError(error.response.data.message)
+            });
     }, []);
 
     function handleChange(event) {
@@ -33,25 +47,25 @@ function AddRestaurant() {
                 [name]: value
             };
         })
-        console.warn(restaurant)
     }
 
-    function handleSelect(event) {
-        const {name, value} = event.target;
+    function handleSelect(selected) {
         setRestaurant(prevState => {
             return {
                 ...prevState,
-                'locationZone': JSON.parse(value)
+                'locationZone': selected.value
             };
         })
-        console.warn(restaurant)
     }
 
     async function handleSubmit() {
-        let response = await addRestaurant(admin.adminId, restaurant)
-        if (!response.message)
-            console.warn("YAY")
-        else setErrorMessage(response.message)
+        addRestaurant(admin.adminId, restaurant)
+            .then(() => {
+                navigate('/login');
+            })
+            .catch(error => {
+                setError(error.response.data.message)
+            })
     }
 
     return (
@@ -63,6 +77,7 @@ function AddRestaurant() {
                 placeholder={'name'}
                 onChange={handleChange}
             />
+            <br/>
 
             <input
                 name={'location'}
@@ -70,26 +85,30 @@ function AddRestaurant() {
                 placeholder={'location'}
                 onChange={handleChange}
             />
+            <br/>
 
-            <select
-                name={'locationZone'}
-                onChange={handleSelect}
-                defaultValue={''}>
-                {
+            <Select
+                options={
                     zones.map((zone) => {
-                            let val = {id: zone.id};
-                            return <option value={JSON.stringify(val)} key={zone.id}>
-                                {zone.name}
-                            </option>
+                        return {
+                            value: {
+                                id: zone.id
+                            },
+                            label: zone.name
                         }
-                    )
+                    })
                 }
-            </select>
+                onChange={handleSelect}
+            >
+            </Select>
+
+            <br/>
+            <br/>
 
             <br/>
             <Button onClick={handleSubmit}>Add restaurant, boss!</Button>
 
-            <h1>{errorMessage}</h1>
+            <h1>{error}</h1>
         </div>
     );
 }

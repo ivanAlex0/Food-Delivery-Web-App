@@ -1,5 +1,6 @@
 package foodPanda.service.impl;
 
+import foodPanda.exception.InsufficientArgumentsException;
 import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
 import foodPanda.exception.ResourceNotFoundException;
@@ -32,6 +33,9 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Autowired
     private ZoneRepository zoneRepository;
+
+    @Autowired
+    private MenuRepository menuRepository;
 
     @Override
     public Administrator saveAdministrator(Administrator administrator) throws InvalidInputException {
@@ -71,7 +75,7 @@ public class AdministratorServiceImpl implements AdministratorService {
         } else {
             if (restaurant.getName().isEmpty() || restaurant.getLocation().isEmpty()) {
                 throw new InvalidInputException("Name and location of the restaurant cannot be null");
-            } else if (restaurant.getLocationZone() == null) {
+            } else if (restaurant.getLocationZone() == null || restaurant.getLocationZone().getId() == null) {
                 throw new InvalidInputException("Location zone cannot be null, please select one");
             } else {
                 Restaurant _restaurant = restaurantRepository.save(
@@ -84,32 +88,54 @@ public class AdministratorServiceImpl implements AdministratorService {
                                 .administrator(_admin)
                                 .build()
                 );
-                //_admin.setRestaurant(_restaurant);
-                //administratorRepository.save(_admin);
+                Menu _menu = menuRepository.save(
+                        Menu
+                                .builder()
+                                .restaurant(_restaurant)
+                                .build()
+                );
+                for (CategoryType type : CategoryType.values()) {
+                    categoryRepository.save(
+                            Category
+                                    .builder()
+                                    .category(type)
+                                    .menu(_menu)
+                                    .build()
+                    );
+                }
                 return _restaurant;
             }
         }
     }
 
     @Override
-    public Food addFoodForCategory(Long adminId, Food food) throws RuntimeException {
-        Administrator _admin = getCurrentAdmin(adminId);
+    public Food addFoodForCategory(Long categoryId, Food food) throws RuntimeException {
+        if (categoryId == null)
+            throw new InsufficientArgumentsException("No category selected! Please select one first!");
+        if (food == null)
+            throw new InvalidInputException("You might have omitted some fields, please contact the support team.");
+        if (food.getName() == null || food.getName().isEmpty())
+            throw new InvalidInputException("Food name cannot be empty");
+        if (food.getDescription() == null || food.getDescription().isEmpty())
+            throw new InvalidInputException("Food description cannot be empty");
+        if (food.getPrice() == null)
+            throw new InvalidInputException("Food price cannot be null");
 
-        if (food.getName() == null || food.getName().isEmpty() || food.getCategory() == null || food.getCategory().getCategoryId() == null) {
-            throw new InvalidInputException("Food name and category cannot be null");
-        } else {
-            Category _category = categoryRepository.findById(food.getCategory().getCategoryId()).orElseThrow(
-                    () -> new InvalidInputException("Category is not valid")
-            );
-            return foodRepository.save(
-                    Food
-                            .builder()
-                            .name(food.getName())
-                            .category(_category)
-                            .restaurant(_admin.getRestaurant())
-                            .build()
-            );
-        }
+        Category _category = categoryRepository.findById(categoryId).orElseThrow(
+                () -> new RuntimeException("No category found for categoryId=" + categoryId)
+        );
+        food.setCategory(_category);
+
+        return foodRepository.save(
+                Food
+                        .builder()
+                        .name(food.getName())
+                        .description(food.getDescription())
+                        .price(food.getPrice())
+                        .category(_category)
+                        .build()
+        );
+
     }
 
     public List<Category> fetchAllCategories() {
