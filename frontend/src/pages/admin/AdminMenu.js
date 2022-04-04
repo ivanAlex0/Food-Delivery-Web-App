@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import Select from "react-select";
-import {addFood, fetchMenu} from "../api/adminAPI";
-import {get} from "../utils/utils";
+import {addFood, fetchMenu} from "../../api/adminAPI";
+import {get} from "../../utils/utils";
 
-function Menu() {
+
+function AdminMenu() {
     const navigate = useNavigate();
     const [admin = {
         administrator: {},
@@ -20,21 +21,21 @@ function Menu() {
         },
         deliveryZones: [],
         menu: {}
-    }, setRestaurant] = useState(admin.restaurant);
+    }, setRestaurant] = useState(admin?.restaurant);
     const [menu = {
         menuId: '',
         categories: []
-    }, setMenu] = useState(restaurant.menu);
-    const [categories = {
+    }, setMenu] = useState(restaurant?.menu);
+    const [categories = [{
         categoryId: '',
         category: '',
-        foodList: {
+        foodList: [{
             foodId: '',
             name: '',
             description: '',
             price: null
-        }
-    }, setCategories] = useState(menu.categories);
+        }]
+    }], setCategories] = useState(menu?.categories);
     const [food, setFood] = useState({
         name: '',
         description: '',
@@ -54,7 +55,6 @@ function Menu() {
                 [name]: value
             };
         })
-        console.log(food)
     }
 
     function handleSubmit() {
@@ -63,18 +63,15 @@ function Menu() {
                 fetchMenu(restaurant)
                     .then(response => {
                         console.log(response)
-                        setRestaurant(prevState => {
-                            return {
-                                ...prevState,
+                        let newAdmin = {
+                            ...admin,
+                            restaurant: {
+                                ...restaurant,
                                 menu: response
                             }
-                        });
-                        setAdmin(prevState => {
-                            return {
-                                ...prevState,
-                                restaurant: restaurant
-                            }
-                        })
+                        }
+                        localStorage.setItem('admin-info', JSON.stringify(newAdmin));
+                        window.location.reload(false);
                     })
                     .catch(error => {
                         console.log(error)
@@ -87,7 +84,7 @@ function Menu() {
 
     useEffect(() => {
         if (!admin)
-            navigate("/login");
+            navigate("/admin/login");
     }, [])
 
 
@@ -113,7 +110,7 @@ function Menu() {
                 name={'name'}
                 type={'text'}
                 placeholder={'Name...'}
-                onChange={handleChange}/>
+                onChange={(handleChange)}/>
             <br/>
 
             <input
@@ -162,4 +159,4 @@ function Menu() {
     );
 }
 
-export default Menu;
+export default AdminMenu;

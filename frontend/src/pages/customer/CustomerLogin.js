@@ -1,37 +1,35 @@
 import React, {useState} from "react";
-import {sendLogin} from "../api/adminAPI";
+import {sendLogin} from "../../api/customerAPI";
 import {useNavigate} from "react-router-dom";
 
-function Login() {
+function CustomerLogin() {
     localStorage.clear();
     const navigate = useNavigate();
-    const [login, setLogin] = useState({
+    const [accountDTO, setAccountDTO] = useState({
         credential: '',
         password: ''
     });
     const [error, setError] = useState('');
 
+    function submit() {
+        sendLogin(accountDTO)
+            .then(customerData => {
+                localStorage.setItem('customer-info', JSON.stringify(customerData))
+                navigate('/customer/home')
+            })
+            .catch(error => {
+                setError(error.response.data.message)
+            });
+    }
+
     function handleChange(event) {
         const {name, value} = event.target
-        setLogin(prevState => {
+        setAccountDTO(prevState => {
             return {
                 ...prevState,
                 [name]: value
             };
         })
-    }
-
-    function submit() {
-        sendLogin(login)
-            .then(adminData => {
-                localStorage.setItem('admin-info', JSON.stringify(adminData))
-                if(adminData.restaurant)
-                    navigate("/adminHome");
-                else navigate("/addRestaurant")
-            })
-            .catch(error => {
-                setError(error.response.data.message)
-            });
     }
 
     return (
@@ -46,6 +44,7 @@ function Login() {
                     name={'credential'}
                     type={'text'}
                     placeholder={'email'}
+                    className={'form-control'}
                     onChange={handleChange}
                 />
                 <br/>
@@ -54,6 +53,7 @@ function Login() {
                     name={'password'}
                     type={'password'}
                     placeholder={'password'}
+                    className={'form-control'}
                     onChange={handleChange}
                 />
                 <br/>
@@ -73,4 +73,4 @@ function Login() {
     );
 }
 
-export default Login;
+export default CustomerLogin;

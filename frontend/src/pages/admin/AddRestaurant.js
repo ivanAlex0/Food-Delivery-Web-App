@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {Button} from "react-bootstrap";
-import {addRestaurant, fetchZones} from "../api/adminAPI";
+import {addRestaurant, fetchZones} from "../../api/adminAPI";
 import Select from "react-select";
 
 function get(key) {
@@ -28,7 +28,7 @@ function AddRestaurant() {
 
     useEffect(() => {
         if (!admin)
-            navigate('/register')
+            navigate('/admin/register')
 
         fetchZones()
             .then(response => {
@@ -61,7 +61,7 @@ function AddRestaurant() {
     async function handleSubmit() {
         addRestaurant(admin.adminId, restaurant)
             .then(() => {
-                navigate('/login');
+                navigate('/admin/login');
             })
             .catch(error => {
                 setError(error.response.data.message)

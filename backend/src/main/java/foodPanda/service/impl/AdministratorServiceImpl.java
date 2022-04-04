@@ -1,20 +1,18 @@
 package foodPanda.service.impl;
 
+import foodPanda.exception.DuplicateEntryException;
 import foodPanda.exception.InsufficientArgumentsException;
 import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
-import foodPanda.exception.ResourceNotFoundException;
 import foodPanda.model.*;
-import foodPanda.model.DTOs.AdminDTO;
+import foodPanda.model.DTOs.AccountDTO;
 import foodPanda.repository.*;
 import foodPanda.service.services.AdministratorService;
+import foodPanda.service.utils.Validator;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 public class AdministratorServiceImpl implements AdministratorService {
@@ -32,35 +30,44 @@ public class AdministratorServiceImpl implements AdministratorService {
     private CategoryRepository categoryRepository;
 
     @Autowired
-    private ZoneRepository zoneRepository;
-
-    @Autowired
     private MenuRepository menuRepository;
 
+    Validator validator = Validator.getInstance();
+
     @Override
-    public Administrator saveAdministrator(Administrator administrator) throws InvalidInputException {
-        if (!isEmailValid(administrator.getEmail())) {
-            throw new InvalidInputException("Email is not valid!");
-        } else if (!isPasswordValid(administrator.getPassword())) {
+    public Administrator saveAdministrator(AccountDTO accountDTO) throws InvalidInputException {
+        if (accountDTO == null || accountDTO.getCredential() == null || accountDTO.getPassword() == null)
+            throw new InvalidInputException("You request body is not a valid Administrator object. Please refer to the documentation!");
+        if (!validator.isEmailValid(accountDTO.getCredential()))
+            throw new InvalidInputException("Email is not valid! It should be a valid email(eg. foodpanda@glovo.com");
+        if (!validator.isPasswordValid(accountDTO.getPassword()))
             throw new InvalidInputException("Password does not meet the requirements\n-At least 8 characters long\n-At least a digit\nAt least a letter");
-        } else {
+
+
+        try {
             Administrator _admin = administratorRepository.save(
                     Administrator
                             .builder()
-                            .email(administrator.getEmail())
-                            .password(BCrypt.hashpw(administrator.getPassword(), BCrypt.gensalt()))
+                            .email(accountDTO.getCredential())
+                            .password(BCrypt.hashpw(accountDTO.getPassword(), BCrypt.gensalt()))
                             .build());
             _admin.setPassword("********");
             return _admin;
+        } catch (DataIntegrityViolationException dataIntegrityViolationException) {
+            throw new DuplicateEntryException("Email is already registered! Try to login");
         }
+
     }
 
     @Override
-    public Administrator authenticate(AdminDTO adminDTO) throws InvalidCredentialsException {
-        Administrator _admin = administratorRepository.findByEmail(adminDTO.getCredential()).orElseThrow(
+    public Administrator authenticate(AccountDTO accountDTO) throws InvalidCredentialsException {
+        if (accountDTO == null || accountDTO.getCredential() == null || accountDTO.getPassword() == null)
+            throw new InvalidInputException("You request body is not a valid Administrator object. Please refer to the documentation!");
+
+        Administrator _admin = administratorRepository.findByEmail(accountDTO.getCredential()).orElseThrow(
                 () -> new InvalidCredentialsException("Invalid credentials"));
 
-        if (BCrypt.checkpw(adminDTO.getPassword(), _admin.getPassword())) {
+        if (BCrypt.checkpw(accountDTO.getPassword(), _admin.getPassword())) {
             _admin.setPassword("********");
             return _admin;
         } else throw new RuntimeException("Invalid credentials");
@@ -68,16 +75,20 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Override
     public Restaurant addRestaurant(Long adminId, Restaurant restaurant) {
-        Administrator _admin = getCurrentAdmin(adminId);
+        Administrator _admin = administratorRepository.findById(adminId).orElseThrow(
+                () -> new RuntimeException("No administrator found for adminId=" + adminId)
+        );
 
         if (_admin.getRestaurant() != null) {
             throw new RuntimeException("Restaurant already added for this administrator account");
         } else {
-            if (restaurant.getName().isEmpty() || restaurant.getLocation().isEmpty()) {
-                throw new InvalidInputException("Name and location of the restaurant cannot be null");
-            } else if (restaurant.getLocationZone() == null || restaurant.getLocationZone().getId() == null) {
-                throw new InvalidInputException("Location zone cannot be null, please select one");
-            } else {
+            if (restaurant == null || restaurant.getName() == null || restaurant.getLocation() == null || restaurant.getLocationZone() == null)
+                throw new InvalidInputException("You request body is not a valid Restaurant object. Please refer to the documentation!");
+            if (restaurant.getName().isEmpty() || restaurant.getLocation().isEmpty())
+                throw new InvalidInputException("Restaurant {name} and {location} cannot be empty");
+
+
+            try {
                 Restaurant _restaurant = restaurantRepository.save(
                         Restaurant
                                 .builder()
@@ -104,6 +115,8 @@ public class AdministratorServiceImpl implements AdministratorService {
                     );
                 }
                 return _restaurant;
+            } catch (DataIntegrityViolationException dataIntegrityViolationException) {
+                throw new DuplicateEntryException("Name of the restaurant is already taken!");
             }
         }
     }
@@ -112,14 +125,12 @@ public class AdministratorServiceImpl implements AdministratorService {
     public Food addFoodForCategory(Long categoryId, Food food) throws RuntimeException {
         if (categoryId == null)
             throw new InsufficientArgumentsException("No category selected! Please select one first!");
-        if (food == null)
-            throw new InvalidInputException("You might have omitted some fields, please contact the support team.");
-        if (food.getName() == null || food.getName().isEmpty())
-            throw new InvalidInputException("Food name cannot be empty");
-        if (food.getDescription() == null || food.getDescription().isEmpty())
-            throw new InvalidInputException("Food description cannot be empty");
-        if (food.getPrice() == null)
-            throw new InvalidInputException("Food price cannot be null");
+        if (food == null || food.getName() == null || food.getDescription() == null || food.getPrice() == null)
+            throw new InvalidInputException("You request body is not a valid Food object. Please refer to the documentation!");
+        if (food.getName().isEmpty())
+            throw new InvalidInputException("Food {name} cannot be empty");
+        if (food.getDescription().isEmpty())
+            throw new InvalidInputException("Food {description} cannot be empty");
 
         Category _category = categoryRepository.findById(categoryId).orElseThrow(
                 () -> new RuntimeException("No category found for categoryId=" + categoryId)
@@ -135,57 +146,5 @@ public class AdministratorServiceImpl implements AdministratorService {
                         .category(_category)
                         .build()
         );
-
     }
-
-    public List<Category> fetchAllCategories() {
-        return categoryRepository.findAll();
-    }
-
-    public Administrator getCurrentAdmin(Long adminId) throws RuntimeException {
-        return administratorRepository.findById(adminId).orElseThrow(
-                () -> new RuntimeException("No administrator found for adminId=" + adminId)
-        );
-    }
-
-
-    //////////////////////////////////////////////////////////////////////////////////unused
-
-    @Override
-    public List<Administrator> fetchAll() {
-        return administratorRepository.findAll();
-    }
-
-    @Override
-    public Administrator findAdministratorById(Long id) {
-        return administratorRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Administrator", "adminId", id));
-    }
-
-    @Override
-    public Administrator updateAdmin(Administrator administrator, Long id) {
-        Administrator _existing = administratorRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Administrator", "adminId", id));
-
-        administrator.setAdminId(id);
-        BeanUtils.copyProperties(administrator, _existing);
-        administratorRepository.save(_existing);
-
-        return _existing;
-    }
-
-    String emailRegex = "^(.+)@(.+)$";
-    Pattern emailPattern = Pattern.compile(emailRegex);
-
-    String passwordRegex = "^(?=.*[0-9])(?=.*[a-zA-Z])(?=\\S+$).{8,}$";
-    Pattern passwordPattern = Pattern.compile(passwordRegex);
-
-    public boolean isEmailValid(String email) {
-        return emailPattern.matcher(email).matches();
-    }
-
-    public boolean isPasswordValid(String password) {
-        return passwordPattern.matcher(password).matches();
-    }
-
 }

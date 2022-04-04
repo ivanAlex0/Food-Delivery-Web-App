@@ -1,6 +1,6 @@
 export function get(key) {
-    const admin_info = localStorage.getItem(key)
-    return JSON.parse(admin_info)
+    const info = localStorage.getItem(key)
+    return JSON.parse(info)
 }
 
-export default get;
+export default {get};

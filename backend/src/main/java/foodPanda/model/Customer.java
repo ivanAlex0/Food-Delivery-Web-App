@@ -22,21 +22,18 @@ public class Customer {
     private String email;
 
     @NonNull
+    private String password;
+
+    @NonNull
     @Column(unique = true)
     private String name;
 
     @NonNull
     private String address;
 
-    @NonNull
-    private Integer age;
-
-    @NonNull
-    private String password;
-
     @OneToOne
     private Zone addressZone;
 
-    @OneToMany
+    @OneToMany(mappedBy = "customer")
     private List<PandaOrder> pandaOrders;
 }

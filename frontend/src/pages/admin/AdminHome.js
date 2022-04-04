@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {get} from "../utils/utils";
+import {get} from "../../utils/utils";
 
 function AdminHome() {
     const navigate = useNavigate();
@@ -13,20 +13,19 @@ function AdminHome() {
 
     useEffect(() => {
         if (!admin)
-            navigate("/login");
+            navigate("/admin/login");
     }, [])
 
     return (
         <div>
             <button
                 onClick={() => {
-                    navigate('/menu');
+                    navigate('/admin/menu');
                 }}>Menu Page
             </button>
 
             <button
                 onClick={() => {
-                    navigate('/menu');
                 }}>Orders Page
             </button>
         </div>

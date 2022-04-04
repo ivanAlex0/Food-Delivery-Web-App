@@ -1,5 +1,6 @@
 package foodPanda.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -16,6 +17,8 @@ public class PandaOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "pandaOder_generator")
     private Long orderId;
 
-    @ManyToOne
+    @JsonIgnore
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "customer_id", referencedColumnName = "customerId")
     private Customer customer;
 }
