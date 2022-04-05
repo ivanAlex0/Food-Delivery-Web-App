@@ -2,10 +2,9 @@ package foodPanda.service.impl;
 
 import foodPanda.exception.DuplicateEntryException;
 import foodPanda.exception.InvalidInputException;
-import foodPanda.model.Customer;
+import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
-import foodPanda.repository.CustomerRepository;
-import foodPanda.repository.RestaurantRepository;
+import foodPanda.repository.*;
 import foodPanda.service.services.CustomerService;
 import foodPanda.service.utils.Validator;
 import org.mindrot.jbcrypt.BCrypt;
@@ -18,6 +17,18 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
     CustomerRepository customerRepository;
+
+    @Autowired
+    PandaOrderRepository pandaOrderRepository;
+
+    @Autowired
+    CartItemRepository cartItemRepository;
+
+    @Autowired
+    FoodRepository foodRepository;
+
+    @Autowired
+    RestaurantRepository restaurantRepository;
 
     Validator validator = Validator.getInstance();
 
@@ -64,5 +75,55 @@ public class CustomerServiceImpl implements CustomerService {
             _customer.setPassword("********");
             return _customer;
         } else throw new InvalidInputException("Invalid credentials");
+    }
+
+    @Override
+    public PandaOrder placeOrder(Long restaurantId, Long customerId, PandaOrder order) {
+        if (restaurantId == null)
+            throw new InvalidInputException("Required request parameter {restaurantId} cannot be null or missing");
+        if (customerId == null)
+            throw new InvalidInputException("Required request parameter {customerId} cannot be null or missing");
+        if (order == null || order.getProducts() == null)
+            throw new InvalidInputException("You request body is not a valid PandaOrder object. Please refer to the documentation!");
+        if (order.getProducts().size() == 0)
+            throw new InvalidInputException("The order's list of {product} is empty (size == 0)");
+
+        Customer _customer = customerRepository.findById(customerId).orElseThrow(
+                () -> new InvalidInputException("No customer found for customerId=" + customerId)
+        );
+
+        Restaurant _restaurant = restaurantRepository.findById(restaurantId).orElseThrow(
+                () -> new InvalidInputException("No restaurant found for restaurantId=" + restaurantId)
+        );
+
+        PandaOrder _pandaOrder = pandaOrderRepository.save(
+                PandaOrder
+                        .builder()
+                        .customer(_customer)
+                        .products(order.getProducts())
+                        .restaurant(_restaurant)
+                        .status(OrderStatus.PENDING)
+                        .build()
+        );
+        for (CartItem cartItem : order.getProducts()) {
+            Food _foodItem = foodRepository.findById(cartItem.getItem().getFoodId()).orElseThrow(
+                    () -> new InvalidInputException("No Food found for foodId=" + cartItem.getItem().getFoodId())
+            );
+            CartItem _item = cartItemRepository.save(
+                    CartItem
+                            .builder()
+                            .item(_foodItem)
+                            .quantity(cartItem.getQuantity())
+                            .order(_pandaOrder)
+                            .build()
+            );
+        }
+        return _pandaOrder;
+    }
+
+    public PandaOrder find(Long id) {
+        return pandaOrderRepository.findById(id).orElseThrow(
+                () -> new InvalidInputException("no order found for id=" + id)
+        );
     }
 }

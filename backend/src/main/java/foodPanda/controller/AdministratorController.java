@@ -82,4 +82,9 @@ public class AdministratorController {
     public ResponseEntity<APIResponse<Zone>> fetchZones() {
         return new ResponseEntity<>(APIResponse.<Zone>builder().response(zoneServiceImpl.fetchAll()).build(), HttpStatus.OK);
     }
+
+    @PostMapping("changeStatus")
+    public ResponseEntity<PandaOrder> changeOrderStatus(@RequestParam(name = "orderId", required = false) Long orderId, @RequestParam(name = "status", required = false) OrderStatus newStatus) {
+        return new ResponseEntity<>(administratorServiceImpl.changeOrderStatus(orderId, newStatus), HttpStatus.OK);
+    }
 }

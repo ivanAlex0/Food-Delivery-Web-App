@@ -23,5 +23,4 @@ public class Zone {
     @NonNull
     @Column(unique = true)
     private String name;
-
 }

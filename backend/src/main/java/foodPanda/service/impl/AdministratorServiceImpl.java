@@ -14,6 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Service
 public class AdministratorServiceImpl implements AdministratorService {
 
@@ -31,6 +35,9 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Autowired
     private MenuRepository menuRepository;
+
+    @Autowired
+    private PandaOrderRepository pandaOrderRepository;
 
     Validator validator = Validator.getInstance();
 
@@ -146,5 +153,36 @@ public class AdministratorServiceImpl implements AdministratorService {
                         .category(_category)
                         .build()
         );
+    }
+
+    @Override
+    public PandaOrder changeOrderStatus(Long orderId, OrderStatus orderStatus) {
+        if (orderId == null)
+            throw new InvalidInputException("Required request parameter orderId cannot be null or missing");
+        if (orderStatus == null)
+            throw new InvalidInputException("Required request parameter orderStatus cannot be null or missing");
+
+        PandaOrder _pandaOrder = pandaOrderRepository.findById(orderId).orElseThrow(
+                () -> new InvalidInputException("No PandaOrder found for orderId=" + orderId)
+        );
+
+        OrderStatus _currentStatus = _pandaOrder.getStatus();
+
+        if (!validStatusChange(_currentStatus, orderStatus))
+            throw new InvalidInputException("The status change from {status}=" + _currentStatus + " to {status}=" + orderStatus + " is not valid");
+
+        _pandaOrder.setStatus(orderStatus);
+        pandaOrderRepository.save(_pandaOrder);
+        return _pandaOrder;
+    }
+
+    public boolean validStatusChange(OrderStatus _current, OrderStatus _newStatus) {
+        if (_current == OrderStatus.PENDING && _newStatus == OrderStatus.DECLINED)
+            return true;
+        if (_current == OrderStatus.PENDING && _newStatus == OrderStatus.ACCEPTED)
+            return true;
+        if (_current == OrderStatus.ACCEPTED && _newStatus == OrderStatus.IN_DELIVERY)
+            return true;
+        return _current == OrderStatus.IN_DELIVERY && _newStatus == OrderStatus.DELIVERED;
     }
 }

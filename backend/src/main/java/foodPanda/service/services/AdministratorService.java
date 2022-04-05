@@ -1,9 +1,7 @@
 package foodPanda.service.services;
 
-import foodPanda.model.Administrator;
+import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
-import foodPanda.model.Food;
-import foodPanda.model.Restaurant;
 
 public interface AdministratorService {
 
@@ -14,5 +12,7 @@ public interface AdministratorService {
     Restaurant addRestaurant(Long adminId, Restaurant restaurant);
 
     Food addFoodForCategory(Long categoryId, Food food);
+
+    PandaOrder changeOrderStatus(Long orderId, OrderStatus orderStatus);
 
 }
