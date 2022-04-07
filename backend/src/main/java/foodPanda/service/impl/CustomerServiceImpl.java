@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CustomerServiceImpl implements CustomerService {
 
@@ -96,6 +98,9 @@ public class CustomerServiceImpl implements CustomerService {
                 () -> new InvalidInputException("No restaurant found for restaurantId=" + restaurantId)
         );
 
+        if(!_restaurant.getDeliveryZones().contains(_customer.getAddressZone()))
+            throw new InvalidInputException("The restaurant " + _restaurant.getName() + " doesn't deliver to your zone at the moment");
+
         PandaOrder _pandaOrder = pandaOrderRepository.save(
                 PandaOrder
                         .builder()
@@ -103,6 +108,7 @@ public class CustomerServiceImpl implements CustomerService {
                         .products(order.getProducts())
                         .restaurant(_restaurant)
                         .status(OrderStatus.PENDING)
+                        .restaurantName(_restaurant.getName())
                         .build()
         );
         for (CartItem cartItem : order.getProducts()) {
@@ -121,9 +127,8 @@ public class CustomerServiceImpl implements CustomerService {
         return _pandaOrder;
     }
 
-    public PandaOrder find(Long id) {
-        return pandaOrderRepository.findById(id).orElseThrow(
-                () -> new InvalidInputException("no order found for id=" + id)
-        );
+    @Override
+    public List<PandaOrder> fetchOrdersForCustomer(Long customerId) {
+        return pandaOrderRepository.findAllByCustomer_CustomerId(customerId);
     }
 }

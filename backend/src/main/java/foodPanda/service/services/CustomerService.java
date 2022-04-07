@@ -6,6 +6,8 @@ import foodPanda.model.DTOs.AccountDTO;
 import foodPanda.model.PandaOrder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public interface CustomerService {
 
@@ -14,4 +16,6 @@ public interface CustomerService {
     Customer authenticate(AccountDTO accountDTO);
 
     PandaOrder placeOrder(Long restaurantId, Long customerId, PandaOrder order);
+
+    List<PandaOrder> fetchOrdersForCustomer(Long customerId);
 }

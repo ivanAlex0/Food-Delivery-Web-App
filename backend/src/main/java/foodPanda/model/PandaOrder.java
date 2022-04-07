@@ -34,4 +34,7 @@ public class PandaOrder {
 
     @Column(name = "status")
     private OrderStatus status;
+
+    @Column(name = "restaurant")
+    private String restaurantName;
 }

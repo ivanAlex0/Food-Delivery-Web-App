@@ -1,6 +1,9 @@
 import React, {useState} from "react";
 import {sendLogin} from "../../api/customerAPI";
 import {useNavigate} from "react-router-dom";
+import {Button, Card, Form, Nav} from "react-bootstrap";
+import customerLogin from "../../res/customer_login.jpg";
+import {Helmet} from "react-helmet";
 
 function CustomerLogin() {
     localStorage.clear();
@@ -11,7 +14,7 @@ function CustomerLogin() {
     });
     const [error, setError] = useState('');
 
-    function submit() {
+    function handleSubmit(event) {
         sendLogin(accountDTO)
             .then(customerData => {
                 localStorage.setItem('customer-info', JSON.stringify(customerData))
@@ -20,6 +23,7 @@ function CustomerLogin() {
             .catch(error => {
                 setError(error.response.data.message)
             });
+        event.preventDefault();
     }
 
     function handleChange(event) {
@@ -33,42 +37,71 @@ function CustomerLogin() {
     }
 
     return (
-        <div className="App">
-            <header/>
+        <div style={{height: 800, backgroundImage: 'url(' + customerLogin + ')', backgroundSize: 'cover'}}>
+            <Helmet>
+                <title>🍔 Customer | Login</title>
+            </Helmet>
 
-            <h1>Login Page admin</h1>
+            <Nav
+                style={{
+                    backgroundColor: 'black', height: 55, overflow: 'hidden',
+                    position: 'fixed',
+                    top: 0,
+                    zIndex: 100,
+                    width: '100%'
+                }}>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 300}}>
+                    <Nav.Link href="/admin/login" style={{color: 'white', fontSize: 20}}>Admin</Nav.Link>
+                </Nav.Item>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 700}}>
+                    <Nav.Link href="/customer/login" style={{color: 'white', fontSize: 20}}>Customer</Nav.Link>
+                </Nav.Item>
+            </Nav>
 
-            <div
-                className='col-sm-6 offset-sm-3'>
-                <input
-                    name={'credential'}
-                    type={'text'}
-                    placeholder={'email'}
-                    className={'form-control'}
-                    onChange={handleChange}
-                />
+            <Card style={{opacity: 0.85, left: 500, top: 130, width: 500, height: 475, backgroundColor: 'lightcoral', padding: 50}}>
+                <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
+                    Login as customer
+                </Card.Title>
                 <br/>
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Email address</Form.Label>
+                        <Form.Control
+                            name={'credential'}
+                            type={'email'}
+                            placeholder={'Enter email...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
 
-                <input
-                    name={'password'}
-                    type={'password'}
-                    placeholder={'password'}
-                    className={'form-control'}
-                    onChange={handleChange}
-                />
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Password</Form.Label>
+                        <Form.Control
+                            name={'password'}
+                            type={'password'}
+                            placeholder={'Enter password...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
+
+                    <text style={{color: 'red', justifyContent: 'center', display: 'flex'}}>
+                        {error}
+                    </text>
+
+                    <Button variant="success" type="submit" style={{width: 400}}>
+                        Login
+                    </Button>
+                </Form>
+
                 <br/>
+                <text style={{color: 'black'}}>
+                    Don't have an account?
+                </text>
 
-                <button
-                    className={'btn btn-primary'}
-                    onClick={submit}>
-                    Login
-                </button>
-
-                <h2>
-                    {error}
-                </h2>
-
-            </div>
+                <Button style={{width: 100}} onClick={() => {
+                    navigate('/customer/register')
+                }}>
+                    Register
+                </Button>
+            </Card>
         </div>
     );
 }

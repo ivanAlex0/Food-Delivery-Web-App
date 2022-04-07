@@ -1,8 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {Button} from "react-bootstrap";
+import {Button, Card, Form} from "react-bootstrap";
 import {addRestaurant, fetchZones} from "../../api/adminAPI";
 import Select from "react-select";
+import {Multiselect} from 'multiselect-react-dropdown';
+import {Helmet} from "react-helmet";
+import add_restaurant from "../../res/add_restaurant.jpg";
 
 function get(key) {
     let admin_info = localStorage.getItem(key);
@@ -15,7 +18,7 @@ function AddRestaurant() {
         adminId: '',
         email: '',
         restaurant: ''
-    }, setAdmin] = useState(get('admin-info'));
+    }] = useState(get('admin-info'));
     const [restaurant, setRestaurant] = useState({
         name: '',
         location: '',
@@ -58,7 +61,16 @@ function AddRestaurant() {
         })
     }
 
-    async function handleSubmit() {
+    function onSelect(selectedList) {
+        setRestaurant(prevState => {
+            return {
+                ...prevState,
+                'deliveryZones': selectedList
+            };
+        })
+    }
+
+    function handleSubmit(event) {
         addRestaurant(admin.adminId, restaurant)
             .then(() => {
                 navigate('/admin/login');
@@ -66,49 +78,97 @@ function AddRestaurant() {
             .catch(error => {
                 setError(error.response.data.message)
             })
+        event.preventDefault()
     }
 
     return (
-        <div>
-            <h1>Add you restaurant, chef!</h1>
-            <input
-                name={'name'}
-                type={'text'}
-                placeholder={'name'}
-                onChange={handleChange}
-            />
-            <br/>
+        <div style={{height: 800, backgroundImage: 'url(' + add_restaurant + ')', backgroundSize: 'cover'}}>
+            <Helmet>
+                <title>🍕 Admin | Add Restaurant</title>
+            </Helmet>
 
-            <input
-                name={'location'}
-                type={'text'}
-                placeholder={'location'}
-                onChange={handleChange}
-            />
-            <br/>
+            <Card style={{opacity: 0.85, left: 425, top: 35, width: 700, height: 650, backgroundColor: 'lightblue', padding: 50}}>
+                <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
+                    Add your restaurant
+                </Card.Title>
+                <br/>
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Name of the
+                            restaurant</Form.Label>
+                        <Form.Control
+                            name={'name'}
+                            type={'text'}
+                            placeholder={'Enter name...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
 
-            <Select
-                options={
-                    zones.map((zone) => {
-                        return {
-                            value: {
-                                id: zone.id
-                            },
-                            label: zone.name
-                        }
-                    })
-                }
-                onChange={handleSelect}
-            >
-            </Select>
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Location of the
+                            restaurant</Form.Label>
+                        <Form.Control
+                            name={'location'}
+                            type={'text'}
+                            placeholder={'Enter the location...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
 
-            <br/>
-            <br/>
+                    <Form.Group>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Location Zone</Form.Label>
+                        <Select
+                            options={
+                                zones.map((zone) => {
+                                    return {
+                                        value: {
+                                            id: zone.id
+                                        },
+                                        label: zone.name
+                                    }
+                                })
+                            }
+                            onChange={handleSelect}
+                        >
+                        </Select>
+                    </Form.Group>
+                    <br/>
 
-            <br/>
-            <Button onClick={handleSubmit}>Add restaurant, boss!</Button>
+                    <Form.Group>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Delivery Zones</Form.Label>
+                        <Multiselect
+                            options={
+                                zones.map(zone => {
+                                    return {
+                                        name: zone.name,
+                                        id: zone.id
+                                    }
+                                })
+                            }
+                            onSelect={onSelect}
+                            closeIcon={'close'}
+                            displayValue="name"/>
+                    </Form.Group>
 
-            <h1>{error}</h1>
+                    <br/>
+                    <div style={{color: 'red', justifyContent: 'center', display: 'flex'}}>
+                        {error}
+                    </div>
+
+                    <Button variant="success" type="submit" style={{width: 600}}>
+                        Add restaurant
+                    </Button>
+                </Form>
+
+                <br/>
+                <div style={{color: 'black'}}>
+                    Not ready yet? Come back later!
+                </div>
+
+                <Button style={{width: 100}} onClick={() => {
+                    navigate('/admin/register')
+                }}>
+                    Back
+                </Button>
+            </Card>
         </div>
     );
 }

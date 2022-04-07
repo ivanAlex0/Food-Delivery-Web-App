@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -94,6 +92,8 @@ public class AdministratorServiceImpl implements AdministratorService {
             if (restaurant.getName().isEmpty() || restaurant.getLocation().isEmpty())
                 throw new InvalidInputException("Restaurant {name} and {location} cannot be empty");
 
+            if (!restaurant.getDeliveryZones().contains(restaurant.getLocationZone()))
+                restaurant.getDeliveryZones().add(restaurant.getLocationZone());
 
             try {
                 Restaurant _restaurant = restaurantRepository.save(
@@ -158,9 +158,9 @@ public class AdministratorServiceImpl implements AdministratorService {
     @Override
     public PandaOrder changeOrderStatus(Long orderId, OrderStatus orderStatus) {
         if (orderId == null)
-            throw new InvalidInputException("Required request parameter orderId cannot be null or missing");
+            throw new InvalidInputException("Required request parameter {orderId} cannot be null or missing");
         if (orderStatus == null)
-            throw new InvalidInputException("Required request parameter orderStatus cannot be null or missing");
+            throw new InvalidInputException("Required request parameter {orderStatus} cannot be null or missing");
 
         PandaOrder _pandaOrder = pandaOrderRepository.findById(orderId).orElseThrow(
                 () -> new InvalidInputException("No PandaOrder found for orderId=" + orderId)
@@ -174,6 +174,18 @@ public class AdministratorServiceImpl implements AdministratorService {
         _pandaOrder.setStatus(orderStatus);
         pandaOrderRepository.save(_pandaOrder);
         return _pandaOrder;
+    }
+
+    @Override
+    public List<PandaOrder> fetchOrders(Long restaurantId) {
+        if (restaurantId == null)
+            throw new InvalidInputException("Required request parameter {restaurantId} cannot be null or missing");
+
+        Restaurant _restaurant = restaurantRepository.findById(restaurantId).orElseThrow(
+                () -> new InvalidInputException("No restaurant found for restaurantId=" + restaurantId)
+        );
+
+        return _restaurant.getOrders();
     }
 
     public boolean validStatusChange(OrderStatus _current, OrderStatus _newStatus) {

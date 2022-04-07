@@ -1,160 +1,112 @@
 import React, {useEffect, useState} from "react";
+import {Card, Nav} from "react-bootstrap";
+import {foodList, get} from "../../utils/utils";
 import {useNavigate} from "react-router-dom";
-import Select from "react-select";
-import {addFood, fetchMenu} from "../../api/adminAPI";
-import {get} from "../../utils/utils";
-
+import background from '../../res/restaurant.jpg';
+import {Helmet} from "react-helmet";
 
 function AdminMenu() {
+    const [admin] = useState(get('admin-info'));
+    const [restaurant] = useState(admin?.restaurant);
     const navigate = useNavigate();
-    const [admin = {
-        administrator: {},
-        adminId: '',
-        email: '',
-        restaurant: {}
-    }, setAdmin] = useState(get('admin-info'));
-    const [restaurant = {
-        name: '',
-        location: '',
-        locationZone: {
-            name: ''
-        },
-        deliveryZones: [],
-        menu: {}
-    }, setRestaurant] = useState(admin?.restaurant);
-    const [menu = {
-        menuId: '',
-        categories: []
-    }, setMenu] = useState(restaurant?.menu);
-    const [categories = [{
-        categoryId: '',
-        category: '',
-        foodList: [{
-            foodId: '',
-            name: '',
-            description: '',
-            price: null
-        }]
-    }], setCategories] = useState(menu?.categories);
-    const [food, setFood] = useState({
-        name: '',
-        description: '',
-        price: null
-    });
-    const [category, setCategory] = useState({
-        categoryId: '',
-        category: ''
-    });
-    const [error, setError] = useState('');
 
-    function handleChange(event) {
-        const {name, value} = event.target;
-        setFood(prevState => {
-            return {
-                ...prevState,
-                [name]: value
-            };
-        })
-    }
-
-    function handleSubmit() {
-        addFood(category, food)
-            .then(() => {
-                fetchMenu(restaurant)
-                    .then(response => {
-                        console.log(response)
-                        let newAdmin = {
-                            ...admin,
-                            restaurant: {
-                                ...restaurant,
-                                menu: response
-                            }
-                        }
-                        localStorage.setItem('admin-info', JSON.stringify(newAdmin));
-                        window.location.reload(false);
-                    })
-                    .catch(error => {
-                        console.log(error)
-                    })
-            })
-            .catch(error => {
-                setError(error.response.data.message)
-            });
-    }
 
     useEffect(() => {
         if (!admin)
-            navigate("/admin/login");
+            navigate('/admin/login')
     }, [])
-
 
     return (
         <div>
-            <h1> Hello, back {restaurant.name} </h1>
+            <Helmet>
+                <title>🍕 Admin | Menu</title>
+            </Helmet>
 
-            <h1>Add a new food!</h1>
+            <Nav
+                style={{
+                    backgroundColor: 'black', height: 55, overflow: 'hidden',
+                    position: 'fixed',
+                    top: 0,
+                    zIndex: 100,
+                    width: '100%'
+                }}>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 10}}>
+                    <Nav.Link href="/admin/login" style={{color: 'white', fontSize: 20}}>Home</Nav.Link>
+                </Nav.Item>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 300}}>
+                    <Nav.Link href="/admin/addFood" style={{color: 'white', fontSize: 20}}>Add Food</Nav.Link>
+                </Nav.Item>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 200}}>
+                    <Nav.Link href="/admin/menu" style={{color: 'white', fontSize: 20}}>Menu</Nav.Link>
+                </Nav.Item>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 200}}>
+                    <Nav.Link href="/admin/orders" style={{color: 'white', fontSize: 20}}>Orders</Nav.Link>
+                </Nav.Item>
+            </Nav>
 
-            <Select options={
-                categories.map(cat => {
-                    return {
-                        value: cat,
-                        label: cat.category
-                    }
-                })
-            }
-                    onChange={(selected) => setCategory(selected.value)}>
-            </Select>
-            <br/>
+            <div style={{padding: 100, backgroundImage: 'url(' + background + ')', backgroundSize: 'contain'}}>
 
-            <input
-                name={'name'}
-                type={'text'}
-                placeholder={'Name...'}
-                onChange={(handleChange)}/>
-            <br/>
-
-            <input
-                name={'description'}
-                type={'text'}
-                placeholder={'Description...'}
-                onChange={handleChange}/>
-            <br/>
-
-            <input
-                name={'price'}
-                type={'number'}
-                placeholder={'Price...'}
-                onChange={handleChange}/>
-
-            <button
-                onClick={handleSubmit}>
-                Add new food!
-            </button>
-            <br/>
-            <h1>{error}</h1>
-
-            <h1>
-                Menu
-            </h1>
-            <ul>
-                {
-                    categories.map(cat => {
-                        return <li key={cat.categoryId}>
-                            {cat.category}
-                            <ul>
+                <Card style={{
+                    borderRadius: 45,
+                    backgroundColor: 'yellowgreen',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: 400,
+                    left: 450,
+                    height: 150
+                }}>
+                    <Card.Title style={{fontSize: 45, display: 'flex', justifyContent: 'center'}}>
+                        {restaurant.name}'s Menu
+                    </Card.Title>
+                </Card>
+                {restaurant.menu.categories?.map(category => {
+                    return <div>
+                        <h1 style={{color: 'white', fontSize: 75}}>
+                            {category.category}
+                        </h1>
+                        <Card style={{
+                            border: '15px solid',
+                            borderColor: 'white',
+                            borderRadius: 30,
+                            backgroundImage: 'url(' + foodList[category.categoryId - 1] + ')',
+                            backgroundSize: 'cover'
+                        }}>
+                            <Card.Body>
+                                <Card.Title style={{color: 'white'}}>
+                                    {category.category}
+                                </Card.Title>
                                 {
-                                    cat.foodList.map(food => {
-                                        return <li key={food.foodId}>
-                                            {food.name} ---- {food.description} ---- {food.price}
-                                        </li>
+                                    category.foodList.map(food => {
+                                        return <div style={{height: 150, padding: 20}}>
+                                            <Card style={{
+                                                backgroundColor: 'slategray',
+                                                color: 'white',
+                                                border: '2px solid',
+                                                borderColor: 'white',
+                                                height: '100%'
+                                            }}>
+                                                <Card.Body>
+                                                    <Card.Title>
+                                                        {food.name}
+                                                    </Card.Title>
+                                                    <Card.Text>
+                                                        {food.description}
+                                                        <br/>
+                                                        Price: {food.price}
+                                                    </Card.Text>
+                                                </Card.Body>
+                                            </Card>
+                                        </div>
                                     })
                                 }
-                            </ul>
-                        </li>
-                    })
-                }
-            </ul>
-
+                            </Card.Body>
+                        </Card>
+                        <br/>
+                        <br/>
+                        <br/>
+                    </div>
+                })}
+            </div>
         </div>
     );
 }

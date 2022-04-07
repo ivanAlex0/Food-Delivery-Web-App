@@ -1,6 +1,9 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {sendRegister} from "../../api/adminAPI";
+import {Button, Card, Form, Nav} from "react-bootstrap";
+import adminRegister from "../../res/admin_register.jpg";
+import {Helmet} from "react-helmet";
 
 function AdminRegister() {
     localStorage.clear();
@@ -11,8 +14,7 @@ function AdminRegister() {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    function submit() {
-        console.log(JSON.stringify(accountDTO))
+    function handleSubmit(event) {
         sendRegister(accountDTO)
             .then(response => {
                 localStorage.setItem('admin-info', JSON.stringify(response));
@@ -22,6 +24,7 @@ function AdminRegister() {
                 console.warn(error.response)
                 setError(error.response.data.message)
             });
+        event.preventDefault();
     }
 
     function handleChange(event) {
@@ -35,40 +38,79 @@ function AdminRegister() {
     }
 
     return (
-        <div className="App">
-            <header/>
+        <div style={{height: 1000, backgroundImage: 'url(' + adminRegister + ')', backgroundSize: 'cover'}}>
+            <Helmet>
+                <title>🍕 Admin | Orders</title>
+            </Helmet>
 
-            <h1>Register admin</h1>
+            <Nav
+                style={{
+                    backgroundColor: 'black', height: 55, overflow: 'hidden',
+                    position: 'fixed',
+                    top: 0,
+                    zIndex: 100,
+                    width: '100%'
+                }}>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 300}}>
+                    <Nav.Link href="/admin/login" style={{color: 'white', fontSize: 20}}>Admin</Nav.Link>
+                </Nav.Item>
+                <Nav.Item style={{paddingTop: 7, paddingLeft: 700}}>
+                    <Nav.Link href="/customer/login" style={{color: 'white', fontSize: 20}}>Customer</Nav.Link>
+                </Nav.Item>
+            </Nav>
 
-            <div
-                className='col-sm-6 offset-sm-3'>
-                <input
-                    name={'credential'}
-                    type={'text'}
-                    placeholder={'email'}
-                    className={'form-control'}
-                    onChange={handleChange}/>
+            <Card style={{
+                opacity: 0.85,
+                left: 500,
+                top: 130,
+                width: 500,
+                height: 500,
+                backgroundColor: 'seagreen',
+                padding: 50
+            }}>
+                <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
+                    Register as admin
+                </Card.Title>
                 <br/>
+                <Form onSubmit={handleSubmit}>
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Email address</Form.Label>
+                        <Form.Control
+                            name={'credential'}
+                            type={'email'}
+                            placeholder={'Enter email...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
 
-                <input
-                    name={'password'}
-                    type={'password'}
-                    placeholder={'password'}
-                    className={'form-control'}
-                    onChange={handleChange}/>
+                    <Form.Group className={'mb-3'}>
+                        <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Password</Form.Label>
+                        <Form.Control
+                            name={'password'}
+                            type={'password'}
+                            placeholder={'Enter password...'}
+                            onChange={handleChange}/>
+                    </Form.Group>
+
+                    <text style={{color: 'red', justifyContent: 'center', display: 'flex'}}>
+                        {error}
+                    </text>
+
+                    <Button variant="warning" type="submit" style={{width: 400}}>
+                        Register
+                    </Button>
+                </Form>
+
                 <br/>
+                <text style={{color: 'black'}}>
+                    Already have an account?
+                </text>
 
-                <button
-                    onClick={submit}
-                    className={'btn btn-primary'}>
-                    Register
-                </button>
-
-                <h1>
-                    {error}
-                </h1>
-
-            </div>
+                <Button variant={'secondary'} style={{width: 100}} onClick={() => {
+                    navigate('/admin/login')
+                }}>
+                    Login
+                </Button>
+            </Card>
         </div>
     );
 }

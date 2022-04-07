@@ -47,6 +47,6 @@ public class Restaurant {
     private Administrator administrator;
 
     @OneToMany(mappedBy = "restaurant", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private List<PandaOrder> pandaOrders;
+    private List<PandaOrder> orders;
 
 }

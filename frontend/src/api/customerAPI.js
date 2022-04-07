@@ -39,4 +39,34 @@ export async function fetchRestaurants() {
     return await response.data;
 }
 
-export default {sendRegister, path};
+export async function sendOrder(order, customerId, restaurantId) {
+    const response = await axios(
+        {
+            method: 'POST',
+            url: path + 'placeOrder',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(order),
+            params: {
+                customerId: customerId,
+                restaurantId: restaurantId
+            }
+        }
+    );
+    return await response.data;
+}
+
+export async function fetchOrders(customerId) {
+    const response = await axios(
+        {
+            method: 'GET',
+            url: path + 'fetchOrders',
+            params: {
+                customerId: customerId
+            }
+        }
+    );
+    return await response.data;
+}
+

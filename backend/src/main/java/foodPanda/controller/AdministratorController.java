@@ -87,4 +87,9 @@ public class AdministratorController {
     public ResponseEntity<PandaOrder> changeOrderStatus(@RequestParam(name = "orderId", required = false) Long orderId, @RequestParam(name = "status", required = false) OrderStatus newStatus) {
         return new ResponseEntity<>(administratorServiceImpl.changeOrderStatus(orderId, newStatus), HttpStatus.OK);
     }
+
+    @GetMapping("fetchOrders")
+    public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForRestaurant(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws InvalidInputException {
+        return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(administratorServiceImpl.fetchOrders(restaurantId)).build(), HttpStatus.OK);
+    }
 }

@@ -86,4 +86,35 @@ async function fetchMenu(restaurant) {
     return await response.data;
 }
 
-export {fetchZones, addRestaurant, sendLogin, addFood, fetchMenu, sendRegister, path}
+async function changeStatus(order) {
+    console.warn(order)
+    const response = await axios(
+        {
+            method: 'POST',
+            url: path + 'changeStatus',
+            params: {
+                orderId: order.orderId,
+                status: order.status
+            }
+        }
+    );
+    return await response.data;
+}
+
+async function fetchOrders(restaurant) {
+    console.log(restaurant.restaurantId)
+    const response = await axios(
+        {
+            method: 'get',
+            url: path + 'fetchOrders',
+            params: {
+                restaurantId: restaurant.restaurantId
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    return await response.data;
+}
+
+export {fetchZones, addRestaurant, sendLogin, addFood, fetchMenu, sendRegister, changeStatus, fetchOrders, path}

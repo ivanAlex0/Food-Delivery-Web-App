@@ -25,7 +25,7 @@ public class Customer {
     private String password;
 
     @NonNull
-    @Column(unique = true)
+    @Column
     private String name;
 
     @NonNull

@@ -42,8 +42,8 @@ public class CustomerController {
         return new ResponseEntity<>(APIResponse.<Restaurant>builder().response(restaurantServiceImpl.fetchRestaurants()).build(), HttpStatus.OK);
     }
 
-    @GetMapping("fetchOrder")
-    public ResponseEntity<PandaOrder> findById(@RequestParam(name = "orderId") Long id) {
-        return new ResponseEntity<>(customerServiceImpl.find(id), HttpStatus.OK);
+    @GetMapping("fetchOrders")
+    public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForCustomer(@RequestParam(name = "customerId") Long customerId) {
+        return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(customerServiceImpl.fetchOrdersForCustomer(customerId)).build(), HttpStatus.OK);
     }
 }
