@@ -56,10 +56,10 @@ function AdminMenu() {
                     height: 150
                 }}>
                     <Card.Title style={{fontSize: 45, display: 'flex', justifyContent: 'center'}}>
-                        {restaurant.name}'s Menu
+                        {restaurant?.name}'s Menu
                     </Card.Title>
                 </Card>
-                {restaurant.menu.categories?.map(category => {
+                {restaurant?.menu.categories?.map(category => {
                     return <div>
                         <h1 style={{color: 'white', fontSize: 75}}>
                             {category.category}
@@ -68,7 +68,7 @@ function AdminMenu() {
                             border: '15px solid',
                             borderColor: 'white',
                             borderRadius: 30,
-                            backgroundImage: 'url(' + foodList[category.categoryId - 1] + ')',
+                            backgroundImage: 'url(' + foodList[category.categoryId % 6] + ')',
                             backgroundSize: 'cover'
                         }}>
                             <Card.Body>

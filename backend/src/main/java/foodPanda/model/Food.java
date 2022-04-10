@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -18,7 +19,7 @@ public class Food {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "food_generator")
     private Long foodId;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @Column(name = "description")
@@ -31,4 +32,7 @@ public class Food {
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "category_id", referencedColumnName = "categoryId")
     private Category category;
+
+    @ManyToMany
+    private List<Food> foodList;
 }

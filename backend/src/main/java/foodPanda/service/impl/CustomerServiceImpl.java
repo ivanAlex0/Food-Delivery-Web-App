@@ -4,6 +4,7 @@ import foodPanda.exception.DuplicateEntryException;
 import foodPanda.exception.InvalidInputException;
 import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
+import foodPanda.model.states.State;
 import foodPanda.repository.*;
 import foodPanda.service.services.CustomerService;
 import foodPanda.service.utils.Validator;
@@ -31,6 +32,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Autowired
     RestaurantRepository restaurantRepository;
+
+    @Autowired
+    StateRepository stateRepository;
 
     Validator validator = Validator.getInstance();
 
@@ -98,8 +102,10 @@ public class CustomerServiceImpl implements CustomerService {
                 () -> new InvalidInputException("No restaurant found for restaurantId=" + restaurantId)
         );
 
-        if(!_restaurant.getDeliveryZones().contains(_customer.getAddressZone()))
+        if (!_restaurant.getDeliveryZones().contains(_customer.getAddressZone()))
             throw new InvalidInputException("The restaurant " + _restaurant.getName() + " doesn't deliver to your zone at the moment");
+
+        State _pendingState = stateRepository.findByOrderStatus(OrderStatus.PENDING);
 
         PandaOrder _pandaOrder = pandaOrderRepository.save(
                 PandaOrder
@@ -107,10 +113,11 @@ public class CustomerServiceImpl implements CustomerService {
                         .customer(_customer)
                         .products(order.getProducts())
                         .restaurant(_restaurant)
-                        .status(OrderStatus.PENDING)
+                        .state(_pendingState)
                         .restaurantName(_restaurant.getName())
                         .build()
         );
+
         for (CartItem cartItem : order.getProducts()) {
             Food _foodItem = foodRepository.findById(cartItem.getItem().getFoodId()).orElseThrow(
                     () -> new InvalidInputException("No Food found for foodId=" + cartItem.getItem().getFoodId())

@@ -36,7 +36,6 @@ function AdminLogin() {
                 [name]: value
             };
         })
-        console.log(accountDTO)
     }
 
     return (

@@ -1,13 +1,13 @@
 package foodPanda.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import foodPanda.model.states.State;
 import lombok.*;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -32,9 +32,10 @@ public class PandaOrder {
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-    @Column(name = "status")
-    private OrderStatus status;
+    @OneToOne
+    private State state;
 
     @Column(name = "restaurant")
     private String restaurantName;
+
 }

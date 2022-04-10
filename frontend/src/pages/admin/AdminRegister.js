@@ -21,7 +21,6 @@ function AdminRegister() {
                 navigate('/admin/addRestaurant');
             })
             .catch(error => {
-                console.warn(error.response)
                 setError(error.response.data.message)
             });
         event.preventDefault();

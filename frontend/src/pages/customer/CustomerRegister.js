@@ -53,7 +53,6 @@ function CustomerRegister() {
     }
 
     function handleSubmit(event) {
-        console.log(customer)
         sendRegister(customer)
             .then(response => {
                 localStorage.setItem('customer-info', JSON.stringify(response));

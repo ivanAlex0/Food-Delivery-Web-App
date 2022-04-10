@@ -5,6 +5,7 @@ import receipt from '../../res/reciept.jpg';
 import Select from "react-select";
 import {changeStatus, fetchOrders} from "../../api/adminAPI";
 import {Helmet} from "react-helmet";
+import {Multiselect} from 'multiselect-react-dropdown';
 
 function AdminOrders() {
     const [admin = {
@@ -27,19 +28,32 @@ function AdminOrders() {
     const [orders = [{
         orderId: null,
         products: [],
-        status: ''
+        state: {
+            orderStatus: ''
+        }
     }], setOrders] = useState(restaurant?.orders);
+    const [filterOrders, setFilterOrders] = useState(orders);
     const options = [
         {value: 'DECLINED', label: 'Declined'},
         {value: 'ACCEPTED', label: 'Accepted'},
         {value: 'IN_DELIVERY', label: 'In delivery'},
         {value: 'DELIVERED', label: 'Delivered'}];
+    const filterOptions = ['PENDING', 'ACCEPTED', 'DECLINED', 'IN_DELIVERY', 'DELIVERED'];
     const [changedOrder, setChangedOrder] = useState({
             orderId: null,
-            status: ''
+            state: {
+                orderStatus: ''
+            }
         }
     );
     const [error, setError] = useState('');
+    const colorStatus = {
+        'PENDING': 'orange',
+        'ACCEPTED': '#0ec20e',
+        'DECLINED': 'red',
+        'IN_DELIVERY': 'lightblue',
+        'DELIVERED': '#155215'
+    };
 
     useEffect(() => {
         fetchOrders(restaurant)
@@ -51,11 +65,26 @@ function AdminOrders() {
             })
     }, [])
 
+    function handleFilter(selectedList) {
+        if (selectedList.length === 0)
+            setFilterOrders(orders);
+        else {
+            let newOrders = orders.filter(function (item) {
+                return selectedList.includes(item.status);
+            }).map(function (item) {
+                return item;
+            });
+            setFilterOrders(newOrders);
+        }
+    }
+
     function handleSelect(selected, orderId) {
         setError('')
         setChangedOrder({
             orderId: orderId,
-            status: selected.value
+            state: {
+                orderStatus: selected.value
+            }
         })
     }
 
@@ -64,7 +93,15 @@ function AdminOrders() {
             .then(() => {
                 fetchOrders(restaurant)
                     .then(response => {
-                        setOrders(response.response)
+                        let newAdmin = {
+                            ...admin,
+                            restaurant: {
+                                ...restaurant,
+                                orders: response.response
+                            }
+                        }
+                        localStorage.setItem('admin-info', JSON.stringify(newAdmin));
+                        window.location.reload(false);
                     })
                     .catch(error => {
                         setError(error.response.data.message)
@@ -76,7 +113,7 @@ function AdminOrders() {
     }
 
     return (
-        <div style={{backgroundColor: 'black', backgroundImage: 'url(' + receipt + ')', backgroundSize: 'cover'}}>
+        <div style={{backgroundImage: 'url(' + receipt + ')', backgroundSize: 'cover'}}>
             <Helmet>
                 <title>🍕 Admin | Orders</title>
             </Helmet>
@@ -105,62 +142,73 @@ function AdminOrders() {
 
             <br/>
             <br/>
+            <br/>
 
-            {
-                orders.map((order) => {
-                    return <div style={{padding: 100}}>
-                        <Card key={order.products + order.orderId}
-                              style={{
-                                  backgroundColor: 'white',
-                                  padding: 20,
-                                  border: '5px solid',
-                                  borderColor: 'cadetblue',
-                                  borderRadius: 20
-                              }}>
-                            <h2>#{order.orderId} | Status: {order.status}</h2>
-                            <CardGroup>
+            <h2>
+                Filter by status
+            </h2>
+            <Multiselect options={filterOptions} isObject={false}
+                         onSelect={handleFilter} onRemove={handleFilter}>
+
+            </Multiselect>
+            <div>
+                {
+                    filterOrders.map((order) => {
+                        return <div style={{padding: 100}}>
+                            <Card key={order.products + order.orderId}
+                                  style={{
+                                      backgroundColor: colorStatus[order.state.orderStatus],
+                                      padding: 20,
+                                      border: '5px solid',
+                                      borderColor: 'cadetblue',
+                                      borderRadius: 20
+                                  }}>
+                                <h2>#{order.orderId} | Status: {order.state.orderStatus}</h2>
+                                <CardGroup>
+                                    {
+                                        order.products.map(product => {
+                                            return <div style={{height: 100, width: 250, padding: 5}}>
+                                                <Card key={product.item + product.quantity}
+                                                      style={{
+                                                          padding: 10,
+                                                          borderRadius: 20,
+                                                          backgroundColor: 'slategray',
+                                                          color: 'white',
+                                                          border: '2px solid',
+                                                          borderColor: 'white',
+                                                          height: '100%'
+                                                      }}>
+                                                    <Card.Title style={{display: 'flex', justifyContent: 'center'}}>
+                                                        {product.item.name} * {product.quantity}
+                                                    </Card.Title>
+                                                    <Card.Text style={{display: 'flex', justifyContent: 'center'}}>
+                                                        Price: {product.quantity * product.item.price}
+                                                    </Card.Text>
+                                                </Card>
+                                            </div>
+                                        })
+                                    }
+                                </CardGroup>
+                                <br/>
+                                <Select
+                                    options={options}
+                                    onChange={(selected) => handleSelect(selected, order.orderId)}/>
+                                <br/>
+                                <Button
+                                    style={{width: 300}}
+                                    className={'btn btn-primary'}
+                                    onClick={handleSubmit}>
+                                    Change status
+                                </Button>
                                 {
-                                    order.products.map(product => {
-                                        return <div style={{height: 100, width: 250, padding: 5}}>
-                                            <Card key={product.item + product.quantity}
-                                                  style={{
-                                                      padding: 10,
-                                                      borderRadius: 20,
-                                                      backgroundColor: 'slategray',
-                                                      color: 'white',
-                                                      border: '2px solid',
-                                                      borderColor: 'white',
-                                                      height: '100%'
-                                                  }}>
-                                                <Card.Title style={{display: 'flex', justifyContent: 'center'}}>
-                                                    {product.item.name} * {product.quantity}
-                                                </Card.Title>
-                                                <Card.Text style={{display: 'flex', justifyContent: 'center'}}>
-                                                    Price: {product.quantity * product.item.price}
-                                                </Card.Text>
-                                            </Card>
-                                        </div>
-                                    })
+                                    changedOrder.orderId === order.orderId ?
+                                        <h4 style={{color: 'red'}}>{error}</h4> : null
                                 }
-                            </CardGroup>
-                            <br/>
-                            <Select
-                                options={options}
-                                onChange={(selected) => handleSelect(selected, order.orderId)}/>
-                            <br/>
-                            <Button
-                                style={{width: 300}}
-                                className={'btn btn-primary'}
-                                onClick={handleSubmit}>
-                                Change status
-                            </Button>
-                            {
-                                changedOrder.orderId === order.orderId ? <h4 style={{color: 'red'}}>{error}</h4> : null
-                            }
-                        </Card>
-                    </div>
-                })
-            }
+                            </Card>
+                        </div>
+                    })
+                }
+            </div>
         </div>
     );
 }

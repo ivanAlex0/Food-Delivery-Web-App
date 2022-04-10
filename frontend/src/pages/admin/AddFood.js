@@ -65,7 +65,6 @@ function AddFood() {
             .then(() => {
                 fetchMenu(restaurant)
                     .then(response => {
-                        console.log(response)
                         let newAdmin = {
                             ...admin,
                             restaurant: {

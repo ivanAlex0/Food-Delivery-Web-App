@@ -160,7 +160,7 @@ function CustomerHome() {
                             border: '20px solid',
                             borderColor: 'lightslategray',
                             borderRadius: 30,
-                            backgroundImage: 'url(' + foodList[category.categoryId - 1] + ')',
+                            backgroundImage: 'url(' + foodList[category.categoryId % 6] + ')',
                             backgroundSize: 'cover'
                         }}>
                             <Card.Body>

@@ -10,6 +10,6 @@ export function get(key) {
     return JSON.parse(info)
 }
 
-export const foodList = [starters, soup, main_dish, garnish, dessert, beverages];
+export const foodList = [beverages, starters, soup, main_dish, garnish, dessert];
 
 export default {get, foodList};

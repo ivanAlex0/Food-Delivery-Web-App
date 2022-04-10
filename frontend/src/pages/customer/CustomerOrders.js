@@ -25,7 +25,9 @@ function CustomerOrders() {
             },
             quantity: null
         }],
-        status: '',
+        state: {
+            orderStatus: ''
+        },
         restaurantName: ''
     }]);
     const navigate = useNavigate();
@@ -37,7 +39,6 @@ function CustomerOrders() {
         fetchOrders(customer.customerId)
             .then(response => {
                 setOrders(response.response)
-                console.log(response.response)
             })
             .catch(error => {
                 console.warn(error.response.data.message)
@@ -85,7 +86,7 @@ function CustomerOrders() {
                                   borderColor: 'cadetblue',
                                   borderRadius: 20
                               }}>
-                            <h2>#{order.orderId} | Status: {order.status}</h2>
+                            <h2>#{order.orderId} | Status: {order.state.orderStatus}</h2>
                             <h2>{order.restaurantName}</h2>
                             <CardGroup>
                                 {

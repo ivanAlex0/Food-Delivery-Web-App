@@ -87,14 +87,13 @@ async function fetchMenu(restaurant) {
 }
 
 async function changeStatus(order) {
-    console.warn(order)
     const response = await axios(
         {
             method: 'POST',
             url: path + 'changeStatus',
             params: {
                 orderId: order.orderId,
-                status: order.status
+                status: order.state.orderStatus
             }
         }
     );
@@ -102,7 +101,6 @@ async function changeStatus(order) {
 }
 
 async function fetchOrders(restaurant) {
-    console.log(restaurant.restaurantId)
     const response = await axios(
         {
             method: 'get',

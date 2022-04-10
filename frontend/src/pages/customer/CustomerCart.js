@@ -37,7 +37,6 @@ function CustomerCart() {
 
         if (products[index].quantity === 0) {
             products.splice(index, 1);
-            console.log(products)
         }
 
         setProducts(products)
@@ -60,9 +59,9 @@ function CustomerCart() {
     }
 
     return (
-        <div style={{height: 800, backgroundImage: 'url(' + cart + ')', backgroundSize: 'cover'}}>
+        <div style={{backgroundImage: 'url(' + cart + ')', backgroundSize: 'cover'}}>
             <Helmet>
-                <title>🛒 Customer | Add Restaurant</title>
+                <title>🛒 Customer | Cart</title>
             </Helmet>
 
             <Nav

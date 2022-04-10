@@ -6,6 +6,7 @@ import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
 import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
+import foodPanda.model.states.State;
 import foodPanda.repository.*;
 import foodPanda.service.services.AdministratorService;
 import foodPanda.service.utils.Validator;
@@ -36,6 +37,9 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Autowired
     private PandaOrderRepository pandaOrderRepository;
+
+    @Autowired
+    private StateRepository stateRepository;
 
     Validator validator = Validator.getInstance();
 
@@ -166,12 +170,11 @@ public class AdministratorServiceImpl implements AdministratorService {
                 () -> new InvalidInputException("No PandaOrder found for orderId=" + orderId)
         );
 
-        OrderStatus _currentStatus = _pandaOrder.getStatus();
+        State _state = _pandaOrder.getState();
+        OrderStatus _newStatus = _state.changeState(orderStatus);
+        State _newState = stateRepository.findByOrderStatus(_newStatus);
 
-        if (!validStatusChange(_currentStatus, orderStatus))
-            throw new InvalidInputException("The status change from {status}=" + _currentStatus + " to {status}=" + orderStatus + " is not valid");
-
-        _pandaOrder.setStatus(orderStatus);
+        _pandaOrder.setState(_newState);
         pandaOrderRepository.save(_pandaOrder);
         return _pandaOrder;
     }
