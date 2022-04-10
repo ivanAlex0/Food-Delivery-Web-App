@@ -344,7 +344,7 @@ function handleChange(event) {
 ![Admin Orders](res/admin_orders.png)
 
 
-#Further Implementation
+# Further Implementation
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A further implementation would consist in including a mail management system to our application and also send mails with notifications about orders. Also, paying and rewards can also improve the application by making it more realistic and user-friendly. Adding images for every food an administrator can add would also be a great improvement.
 
 <br/>
