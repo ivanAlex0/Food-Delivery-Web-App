@@ -330,17 +330,17 @@ function handleChange(event) {
 # Visuals
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Because in web and mobile development the UI/UX is very important, I have taken some time into styling my application, so below you can find some screenshots of the app.
 
-###Customer Login
+### Customer Login
 ![Customer Login](res/customer_login.png)
-###Customer Menu
+### Customer Menu
 ![Customer Menu](res/customer_menu.png)
-###Customer Cart
+### Customer Cart
 ![Customer Cart](res/customer_cart.png)
-###Admin Register
+### Admin Register
 ![Admin Register](res/admin_register.png)
-###Admin Add Food
+### Admin Add Food
 ![Admin Add Food](res/admin_addFood.png)
-###Admin Orders
+### Admin Orders
 ![Admin Orders](res/admin_orders.png)
 
 
