@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Contains the main method of the application. Here is where the application start
+ */
 @SpringBootApplication
 public class Application {
 
@@ -13,6 +16,11 @@ public class Application {
         SpringApplication.run(Application.class, args);
     }
 
+    /**
+     * Configures the application to accept requests of types ['GET', 'POST', 'PUT', 'DELETE'] from the frontend
+     *
+     * @return The Bean that accepts the requests
+     */
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {

@@ -13,6 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@EqualsAndHashCode
 public class PandaOrder {
 
     @Id

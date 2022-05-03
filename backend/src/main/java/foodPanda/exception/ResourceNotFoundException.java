@@ -1,5 +1,8 @@
 package foodPanda.exception;
 
+/**
+ * A specific Exception to be thrown whenever a resource is not found
+ */
 public class ResourceNotFoundException extends RuntimeException {
 
     private final String resourceName;

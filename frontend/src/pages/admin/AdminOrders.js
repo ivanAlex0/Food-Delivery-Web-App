@@ -161,7 +161,8 @@ function AdminOrders() {
                                       padding: 20,
                                       border: '5px solid',
                                       borderColor: 'cadetblue',
-                                      borderRadius: 20
+                                      borderRadius: 20,
+
                                   }}>
                                 <h2>#{order.orderId} | Status: {order.state.orderStatus}</h2>
                                 <CardGroup>

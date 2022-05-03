@@ -9,6 +9,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+/**
+ * This class is based on the State Design pattern and implements {@link StateInterface} to be able to change the State automatically
+ */
 @Entity
 @Getter
 @Setter
@@ -21,8 +24,17 @@ public class State implements StateInterface {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "state_generator")
     private Long id;
 
+    /**
+     * The actual status{@link OrderStatus} of the State
+     */
     private OrderStatus orderStatus;
 
+    /**
+     * The method automatically changes the status of this State
+     *
+     * @param _newStatus The new status
+     * @return the changed status if valid
+     */
     @Override
     public OrderStatus changeState(OrderStatus _newStatus) {
         if (orderStatus == OrderStatus.PENDING && _newStatus == OrderStatus.DECLINED)

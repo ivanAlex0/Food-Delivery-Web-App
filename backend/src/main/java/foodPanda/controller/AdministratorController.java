@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * The Controller provides all the endpoints to be used by an administrator from the frontend
+ */
 @RestController
 @RequestMapping("admin")
 public class AdministratorController {
@@ -26,7 +29,9 @@ public class AdministratorController {
     private RestaurantServiceImpl restaurantServiceImpl;
 
     /**
-     * @param accountDTO The body of the request converted to an Administrator {email, password} that has to be registered
+     * Registers a new administrator in the DB with the information from the AccountDTO parameter
+     *
+     * @param accountDTO The body of the request converted to an AccountDTO {credential, password} that has to be registered
      * @return A ResponseEntity object with the newly created Administrator(HTTPStatus.CREATED) or an error otherwise
      */
     @PostMapping("register")
@@ -35,6 +40,8 @@ public class AdministratorController {
     }
 
     /**
+     * Checks whether the information from the {accountDTO} matches an entity from the DB and returns the information from the entity
+     *
      * @param accountDTO The body of the request converted to an AdminDTO {credential, password}
      * @return A ResponseEntity object with the authenticated Administrator(HTTPStatus.OK) or an error otherwise
      * @throws InvalidCredentialsException Whenever the combination {credential, password} is incorrect
@@ -45,6 +52,8 @@ public class AdministratorController {
     }
 
     /**
+     * Saves a new Restaurant instance in the DB, linking it to the Admin corresponding with the adminId specified
+     *
      * @param adminId    The adminId that corresponds to the Administrator that will manage the restaurant from below
      * @param restaurant The body of the request converted to a Restaurant {name, location, locationZone} object
      * @return A ResponseEntity object with the newly added Restaurant(HTTPStatus.CREATED) or an error otherwise
@@ -56,6 +65,8 @@ public class AdministratorController {
     }
 
     /**
+     * Saves a new Food instance in the DB, linking it to the Category corresponding to the categoryId specified
+     *
      * @param categoryId The categoryId that corresponds to the Category that of the Food that will be added
      * @param food       The body of the request converted to a Food {name, description, price, category} object
      * @return A ResponseEntity object with the newly added Food(HTTPStatus.CREATED) or an error otherwise
@@ -66,6 +77,8 @@ public class AdministratorController {
     }
 
     /**
+     * Fetches from the DB the Menu instance of a specified restaurant
+     *
      * @param restaurantId The restaurantId that corresponds to the Restaurant whose Menu is to be fetched
      * @return A ResponseEntity object with the fetched Menu(HTTPStatus.OK) or an error otherwise
      * @throws RuntimeException Whenever restaurantId is not provided
@@ -76,6 +89,8 @@ public class AdministratorController {
     }
 
     /**
+     * Fetches all the Zones already saved in the DB
+     *
      * @return A ResponseEntity object with the fetched list of Zone(HTTPStatus.OK) or an error otherwise
      */
     @GetMapping("fetchZones")
@@ -83,11 +98,26 @@ public class AdministratorController {
         return new ResponseEntity<>(APIResponse.<Zone>builder().response(zoneServiceImpl.fetchAll()).build(), HttpStatus.OK);
     }
 
+    /**
+     * Changes the status of a specified order to the given status
+     *
+     * @param orderId   The id of the order whose status is to be changed
+     * @param newStatus The new status that will be applied to the order specified above
+     * @return A ResponseEntity object with the changed Order(HTTPStatus.OK) or an error otherwise
+     * @throws InvalidInputException Whenever the status change is invalid
+     */
     @PostMapping("changeStatus")
-    public ResponseEntity<PandaOrder> changeOrderStatus(@RequestParam(name = "orderId", required = false) Long orderId, @RequestParam(name = "status", required = false) OrderStatus newStatus) {
+    public ResponseEntity<PandaOrder> changeOrderStatus(@RequestParam(name = "orderId", required = false) Long orderId, @RequestParam(name = "status", required = false) OrderStatus newStatus) throws InvalidInputException {
         return new ResponseEntity<>(administratorServiceImpl.changeOrderStatus(orderId, newStatus), HttpStatus.OK);
     }
 
+    /**
+     * Fetches all the orders that correspond to a certain restaurant
+     *
+     * @param restaurantId The id of the restaurant whose orders are to be fetched
+     * @return A ResponseEntity object with the list of Orders(HTTPStatus.OK) or an error otherwise
+     * @throws InvalidInputException Whenever restaurantId is not provided or there is no restaurant matching that id
+     */
     @GetMapping("fetchOrders")
     public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForRestaurant(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws InvalidInputException {
         return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(administratorServiceImpl.fetchOrders(restaurantId)).build(), HttpStatus.OK);

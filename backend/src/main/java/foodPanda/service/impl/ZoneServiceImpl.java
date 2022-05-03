@@ -8,12 +8,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * This class implements the methods declared in the {@link ZoneService}
+ */
 @Service
-public class ZoneServiceImpl{
+public class ZoneServiceImpl {
 
     @Autowired
     private ZoneRepository zoneRepository;
 
+    /**
+     * Fetches all {@link Zone}s from the DB
+     *
+     * @return A List of Zones
+     */
     public List<Zone> fetchAll() {
         return zoneRepository.findAll();
     }

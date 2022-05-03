@@ -121,7 +121,7 @@ function AddFood() {
 
             <br/>
             <br/>
-            <Card style={{opacity: 0.85, left: 500, top: 50, width: 500, height: 600, backgroundColor: 'orange', padding: 50}}>
+            <Card style={{opacity: 0.85, left: 500, top: 50, width: 500, height: 600, backgroundColor: 'orange' , padding: 50, borderRadius: 38  }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Add a new food
                 </Card.Title>
