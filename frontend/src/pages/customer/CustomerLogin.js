@@ -1,9 +1,10 @@
 import React, {useState} from "react";
-import {sendLogin} from "../../api/customerAPI";
 import {useNavigate} from "react-router-dom";
 import {Button, Card, Form, Nav} from "react-bootstrap";
 import customerLogin from "../../res/customer_login.jpg";
 import {Helmet} from "react-helmet";
+import {loginToken} from "../../api/adminAPI";
+import {sendLogin} from "../../api/customerAPI";
 
 function CustomerLogin() {
     localStorage.clear();
@@ -15,14 +16,21 @@ function CustomerLogin() {
     const [error, setError] = useState('');
 
     function handleSubmit(event) {
-        sendLogin(accountDTO)
-            .then(customerData => {
-                localStorage.setItem('customer-info', JSON.stringify(customerData))
-                navigate('/customer/home')
+        loginToken(accountDTO)
+            .then(tokens => {
+                localStorage.setItem("tokens", JSON.stringify(tokens))
+                sendLogin(accountDTO)
+                    .then(customerData => {
+                        localStorage.setItem('customer-info', JSON.stringify(customerData))
+                        navigate('/customer/home')
+                    })
+                    .catch(error => {
+                        setError(error.response.data.message)
+                    });
             })
-            .catch(error => {
-                setError(error.response.data.message)
-            });
+            .catch(() => {
+                setError("Invalid credentials")
+            })
         event.preventDefault();
     }
 
@@ -58,7 +66,15 @@ function CustomerLogin() {
                 </Nav.Item>
             </Nav>
 
-            <Card style={{opacity: 0.85, left: 500, top: 130, width: 500, height: 475, backgroundColor: 'lightcoral', padding: 50}}>
+            <Card style={{
+                opacity: 0.85,
+                left: 500,
+                top: 130,
+                width: 500,
+                height: 475,
+                backgroundColor: 'lightcoral',
+                padding: 50
+            }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Login as customer
                 </Card.Title>

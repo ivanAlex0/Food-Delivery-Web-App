@@ -5,8 +5,10 @@ import {fetchOrders} from "../../api/customerAPI";
 import {Card, CardGroup, Nav} from "react-bootstrap";
 import reciept from "../../res/reciept3.jpg";
 import {Helmet} from "react-helmet";
+import {refreshToken} from "../../api/adminAPI";
 
 function CustomerOrders() {
+    const [tokens, setTokens] = useState(get("tokens"))
     const [customer = {
         customerId: null,
         email: '',
@@ -36,12 +38,26 @@ function CustomerOrders() {
         if (!customer)
             navigate('/customer/login')
 
-        fetchOrders(customer.customerId)
+        fetchOrders(customer.customerId, tokens.accessToken)
             .then(response => {
                 setOrders(response.response)
             })
             .catch(error => {
-                console.warn(error.response.data.message)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem("tokens", JSON.stringify(tokens))
+                            fetchOrders(customer.customerId, tokens.accessToken)
+                                .then(response => {
+                                    setOrders(response.response)
+                                })
+                                .catch(error => {
+                                    console.warn(error.response.data.message)
+                                })
+                        })
+                } else
+                    console.warn(error.response.data.message)
             })
     }, [])
 

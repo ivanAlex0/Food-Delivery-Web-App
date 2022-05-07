@@ -6,11 +6,18 @@ import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
 import foodPanda.service.impl.AdministratorServiceImpl;
 import foodPanda.service.impl.RestaurantServiceImpl;
+import foodPanda.service.impl.UserServiceImpl;
 import foodPanda.service.impl.ZoneServiceImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * The Controller provides all the endpoints to be used by an administrator from the frontend
@@ -19,11 +26,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("admin")
 public class AdministratorController {
 
+    private final Logger LOGGER = LogManager.getLogger(AdministratorController.class);
+
     @Autowired
     private AdministratorServiceImpl administratorServiceImpl;
 
     @Autowired
     private ZoneServiceImpl zoneServiceImpl;
+
+    @Autowired
+    private UserServiceImpl userServiceImpl;
 
     @Autowired
     private RestaurantServiceImpl restaurantServiceImpl;
@@ -84,7 +96,7 @@ public class AdministratorController {
      * @throws RuntimeException Whenever restaurantId is not provided
      */
     @GetMapping("fetchMenu")
-    public ResponseEntity<Menu> fetchMenu(@RequestParam(name = "restaurantId", required = true) Long restaurantId) throws RuntimeException {
+    public ResponseEntity<Menu> fetchMenu(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws RuntimeException {
         return new ResponseEntity<>(restaurantServiceImpl.fetchMenu(restaurantId), HttpStatus.OK);
     }
 
@@ -121,5 +133,15 @@ public class AdministratorController {
     @GetMapping("fetchOrders")
     public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForRestaurant(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws InvalidInputException {
         return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(administratorServiceImpl.fetchOrders(restaurantId)).build(), HttpStatus.OK);
+    }
+
+    @GetMapping("generatePDF")
+    public void generateMenuPDF(@RequestParam(name = "adminId", required = false) Long adminId) {
+        administratorServiceImpl.generateMenuPDF(adminId);
+    }
+
+    @GetMapping("refreshToken")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        userServiceImpl.refreshToken(request, response);
     }
 }

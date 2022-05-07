@@ -1,5 +1,7 @@
 package foodPanda.service.impl;
 
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfWriter;
 import foodPanda.exception.DuplicateEntryException;
 import foodPanda.exception.InsufficientArgumentsException;
 import foodPanda.exception.InvalidCredentialsException;
@@ -10,11 +12,16 @@ import foodPanda.model.states.State;
 import foodPanda.repository.*;
 import foodPanda.service.services.AdministratorService;
 import foodPanda.service.utils.Validator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,6 +29,8 @@ import java.util.List;
  */
 @Service
 public class AdministratorServiceImpl implements AdministratorService {
+
+    private final static Logger LOGGER = LogManager.getLogger(AdministratorServiceImpl.class);
 
     @Autowired
     private AdministratorRepository administratorRepository;
@@ -43,6 +52,9 @@ public class AdministratorServiceImpl implements AdministratorService {
 
     @Autowired
     private StateRepository stateRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * The singleton Validator instance which is used to validate the input received from the controller
@@ -70,13 +82,20 @@ public class AdministratorServiceImpl implements AdministratorService {
 
 
         try {
-            Administrator _admin = administratorRepository.save(
-                    Administrator
+            User _user = userRepository.save(
+                    User
                             .builder()
                             .email(accountDTO.getCredential())
                             .password(BCrypt.hashpw(accountDTO.getPassword(), BCrypt.gensalt()))
                             .build());
-            _admin.setPassword("********");
+
+            Administrator _admin = administratorRepository.save(
+                    Administrator
+                            .builder()
+                            .user(_user)
+                            .build());
+
+            LOGGER.info("New administrator saved with adminId=" + _admin.getAdminId());
             return _admin;
         } catch (DataIntegrityViolationException dataIntegrityViolationException) {
             throw new DuplicateEntryException("Email is already registered! Try to login");
@@ -97,12 +116,15 @@ public class AdministratorServiceImpl implements AdministratorService {
         if (accountDTO == null || accountDTO.getCredential() == null || accountDTO.getPassword() == null)
             throw new InvalidInputException("You request body is not a valid Administrator object. Please refer to the documentation!");
 
-        Administrator _admin = administratorRepository.findByEmail(accountDTO.getCredential()).orElseThrow(
-                () -> new InvalidCredentialsException("Invalid credentials"));
 
-        if (BCrypt.checkpw(accountDTO.getPassword(), _admin.getPassword())) {
-            _admin.setPassword("********");
-            return _admin;
+        User _user = userRepository.findByEmail(accountDTO.getCredential()).orElseThrow(
+                () -> new InvalidCredentialsException("Invalid credentials")
+        );
+
+        if (BCrypt.checkpw(accountDTO.getPassword(), _user.getPassword())) {
+            return administratorRepository.findByUser(_user).orElseThrow(
+                    () -> new InvalidInputException("Are you trying to log in as a user?")
+            );
         } else throw new InvalidInputException("Invalid credentials");
     }
 
@@ -123,14 +145,19 @@ public class AdministratorServiceImpl implements AdministratorService {
         );
 
         if (_admin.getRestaurant() != null) {
+            LOGGER.error("Restaurant was already added for adminId=" + adminId);
             throw new RuntimeException("Restaurant already added for this administrator account");
         } else {
-            if (restaurant == null || restaurant.getName() == null || restaurant.getLocation() == null || restaurant.getLocationZone() == null)
+            if (restaurant == null || restaurant.getName() == null || restaurant.getLocation() == null || restaurant.getLocationZone().getId() == null)
                 throw new InvalidInputException("You request body is not a valid Restaurant object. Please refer to the documentation!");
             if (restaurant.getName().isEmpty() || restaurant.getLocation().isEmpty())
                 throw new InvalidInputException("Restaurant {name} and {location} cannot be empty");
 
-            if (!restaurant.getDeliveryZones().contains(restaurant.getLocationZone()))
+            if (restaurant.getDeliveryZones() == null) {
+                restaurant.setDeliveryZones(new ArrayList<Zone>() {{
+                    add(restaurant.getLocationZone());
+                }});
+            } else if (!restaurant.getDeliveryZones().contains(restaurant.getLocationZone()))
                 restaurant.getDeliveryZones().add(restaurant.getLocationZone());
 
             try {
@@ -159,6 +186,7 @@ public class AdministratorServiceImpl implements AdministratorService {
                                     .build()
                     );
                 }
+                LOGGER.info("New restaurant added for adminId=" + adminId + " with restaurantId=" + _restaurant.getRestaurantId());
                 return _restaurant;
             } catch (DataIntegrityViolationException dataIntegrityViolationException) {
                 throw new DuplicateEntryException("Name of the restaurant is already taken!");
@@ -186,19 +214,26 @@ public class AdministratorServiceImpl implements AdministratorService {
             throw new InvalidInputException("Food {description} cannot be empty");
 
         Category _category = categoryRepository.findById(categoryId).orElseThrow(
-                () -> new RuntimeException("No category found for categoryId=" + categoryId)
+                () -> {
+                    LOGGER.error("No category found for categoryId=" + categoryId);
+                    throw new RuntimeException("No category found for categoryId=" + categoryId);
+                }
         );
         food.setCategory(_category);
 
-        return foodRepository.save(
-                Food
-                        .builder()
-                        .name(food.getName())
-                        .description(food.getDescription())
-                        .price(food.getPrice())
-                        .category(_category)
-                        .build()
-        );
+        Food _food =
+                foodRepository.save(
+                        Food
+                                .builder()
+                                .name(food.getName())
+                                .description(food.getDescription())
+                                .price(food.getPrice())
+                                .category(_category)
+                                .build()
+                );
+
+        LOGGER.info("New food added for categoryId=" + categoryId + " with foodId=" + _food.getCategory());
+        return _food;
     }
 
     /**
@@ -217,7 +252,10 @@ public class AdministratorServiceImpl implements AdministratorService {
             throw new InvalidInputException("Required request parameter {orderStatus} cannot be null or missing");
 
         PandaOrder _pandaOrder = pandaOrderRepository.findById(orderId).orElseThrow(
-                () -> new InvalidInputException("No PandaOrder found for orderId=" + orderId)
+                () -> {
+                    LOGGER.error("No PandaOrder found for orderId=" + orderId);
+                    throw new InvalidInputException("No PandaOrder found for orderId=" + orderId);
+                }
         );
 
         State _state = _pandaOrder.getState();
@@ -226,7 +264,45 @@ public class AdministratorServiceImpl implements AdministratorService {
 
         _pandaOrder.setState(_newState);
         pandaOrderRepository.save(_pandaOrder);
+        LOGGER.info("Status changed for orderId=" + orderId + " from " + _state.getOrderStatus() + " into " + _newState.getOrderStatus());
         return _pandaOrder;
+    }
+
+    public void generateMenuPDF(Long adminId) {
+
+        if (adminId == null)
+            throw new InvalidInputException("The required parameter {adminId} cannot be null");
+
+        Administrator _admin = administratorRepository.findById(adminId).orElseThrow(
+                () -> {
+                    LOGGER.error("No administrator found for adminId= + adminId");
+                    throw new InvalidInputException("No administrator found for adminId=" + adminId);
+                }
+        );
+
+        Menu _menu = _admin.getRestaurant().getMenu();
+
+        Document document = new Document();
+        try {
+            PdfWriter.getInstance(document, new FileOutputStream(_admin.getRestaurant().getName() + " menu.pdf"));
+
+            document.open();
+            Font font = FontFactory.getFont(FontFactory.COURIER, 16, BaseColor.BLACK);
+
+            for (Category category : _menu.getCategories()) {
+                Paragraph chunk = new Paragraph(category.getCategory() + "\n");
+                document.add(chunk);
+                for (Food food : category.getFoodList()) {
+                    Paragraph fod = new Paragraph("\tName: " + food.getName() + "\n\tDescription: " +
+                            food.getDescription() + "\n\tPrice: " + food.getPrice() + "\n\n");
+                    document.add(fod);
+                }
+            }
+
+            document.close();
+        } catch (FileNotFoundException | DocumentException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**

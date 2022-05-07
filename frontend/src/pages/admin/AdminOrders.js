@@ -3,11 +3,12 @@ import {get} from "../../utils/utils";
 import {Button, Card, CardGroup, Nav} from "react-bootstrap";
 import receipt from '../../res/reciept.jpg';
 import Select from "react-select";
-import {changeStatus, fetchOrders} from "../../api/adminAPI";
+import {changeStatus, fetchOrders, refreshToken} from "../../api/adminAPI";
 import {Helmet} from "react-helmet";
 import {Multiselect} from 'multiselect-react-dropdown';
 
 function AdminOrders() {
+    const [tokens, setTokens] = useState(get("tokens"));
     const [admin = {
         administrator: {},
         adminId: '',
@@ -56,12 +57,28 @@ function AdminOrders() {
     };
 
     useEffect(() => {
-        fetchOrders(restaurant)
+        fetchOrders(restaurant, tokens.accessToken)
             .then(response => {
+                console.warn(response)
                 setOrders(response.response)
             })
             .catch(error => {
-                setError(error.response.data.message)
+                refreshToken(tokens.refreshToken)
+                    .then(tokens => {
+                        setTokens(tokens)
+                        localStorage.setItem("tokens", JSON.stringify(tokens))
+                        fetchOrders(restaurant, tokens.accessToken)
+                            .then(response => {
+                                console.warn(response)
+                                setOrders(response.response)
+                            })
+                            .catch(error => {
+                                setError(error.response.data.message)
+                            })
+                    })
+                    .catch(error => {
+                        setError(error.response.data.message)
+                    })
             })
     }, [])
 
@@ -70,7 +87,8 @@ function AdminOrders() {
             setFilterOrders(orders);
         else {
             let newOrders = orders.filter(function (item) {
-                return selectedList.includes(item.status);
+                console.warn(item)
+                return selectedList.includes(item.state.orderStatus);
             }).map(function (item) {
                 return item;
             });
@@ -89,9 +107,9 @@ function AdminOrders() {
     }
 
     function handleSubmit() {
-        changeStatus(changedOrder)
+        changeStatus(changedOrder, tokens.accessToken)
             .then(() => {
-                fetchOrders(restaurant)
+                fetchOrders(restaurant, tokens.accessToken)
                     .then(response => {
                         let newAdmin = {
                             ...admin,
@@ -108,7 +126,35 @@ function AdminOrders() {
                     })
             })
             .catch(error => {
-                setError(error.response.data.message)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem("tokens", JSON.stringify(tokens))
+                            changeStatus(changedOrder, tokens.accessToken)
+                                .then(() => {
+                                    fetchOrders(restaurant, tokens.accessToken)
+                                        .then(response => {
+                                            let newAdmin = {
+                                                ...admin,
+                                                restaurant: {
+                                                    ...restaurant,
+                                                    orders: response.response
+                                                }
+                                            }
+                                            localStorage.setItem('admin-info', JSON.stringify(newAdmin));
+                                            window.location.reload(false);
+                                        })
+                                        .catch(error => {
+                                            setError(error.response.data.message)
+                                        })
+                                })
+                                .catch(error => {
+                                    setError(error.response.data.message)
+                                })
+                        })
+                } else
+                    setError(error.response.data.message)
             })
     }
 

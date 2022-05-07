@@ -2,6 +2,7 @@ package foodPanda.service.services;
 
 
 import foodPanda.model.Customer;
+import foodPanda.model.CustomerRegister;
 import foodPanda.model.DTOs.AccountDTO;
 import foodPanda.model.PandaOrder;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,10 @@ public interface CustomerService {
     /**
      * Saves a {@link Customer} instance in the DB
      *
-     * @param customer The Customer information to be saved
+     * @param customerRegister The Customer information to be saved
      * @return The Customer instance enhanced with the customerId field
      */
-    Customer save(Customer customer);
+    Customer save(CustomerRegister customerRegister);
 
     /**
      * Checks whether the information from the {@link AccountDTO} matches an entry in the DB

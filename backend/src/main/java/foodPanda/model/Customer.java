@@ -17,12 +17,9 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "customer_generator")
     private Long customerId;
 
-    @NonNull
-    @Column(unique = true)
-    private String email;
-
-    @NonNull
-    private String password;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @NonNull
     @Column

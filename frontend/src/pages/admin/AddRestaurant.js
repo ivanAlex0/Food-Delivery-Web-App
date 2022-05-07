@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {Button, Card, Form} from "react-bootstrap";
-import {addRestaurant, fetchZones} from "../../api/adminAPI";
+import {addRestaurant, fetchZones, refreshToken} from "../../api/adminAPI";
 import Select from "react-select";
 import {Multiselect} from 'multiselect-react-dropdown';
 import {Helmet} from "react-helmet";
@@ -14,6 +14,7 @@ function get(key) {
 
 function AddRestaurant() {
     const navigate = useNavigate();
+    const [tokens, setTokens] = useState(get("tokens"));
     const [admin = {
         adminId: '',
         email: '',
@@ -71,12 +72,26 @@ function AddRestaurant() {
     }
 
     function handleSubmit(event) {
-        addRestaurant(admin.adminId, restaurant)
+        addRestaurant(admin.adminId, restaurant, tokens.accessToken)
             .then(() => {
                 navigate('/admin/login');
             })
             .catch(error => {
-                setError(error.response.data.message)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem("token", JSON.stringify(tokens))
+                            addRestaurant(admin.adminId, restaurant, tokens.accessToken)
+                                .then(() => {
+                                    navigate('/admin/login');
+                                })
+                                .catch(error => {
+                                    setError(error.response.data.message)
+                                })
+                        })
+                } else
+                    setError(error.response.data.message)
             })
         event.preventDefault()
     }
@@ -87,7 +102,15 @@ function AddRestaurant() {
                 <title>🍕 Admin | Add Restaurant</title>
             </Helmet>
 
-            <Card style={{opacity: 0.85, left: 425, top: 35, width: 700, height: 650, backgroundColor: 'lightblue', padding: 50}}>
+            <Card style={{
+                opacity: 0.85,
+                left: 425,
+                top: 35,
+                width: 700,
+                height: 650,
+                backgroundColor: 'lightblue',
+                padding: 50
+            }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Add your restaurant
                 </Card.Title>

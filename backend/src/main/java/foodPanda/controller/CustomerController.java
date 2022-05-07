@@ -1,17 +1,19 @@
 package foodPanda.controller;
 
 import foodPanda.exception.InvalidInputException;
-import foodPanda.model.APIResponse;
-import foodPanda.model.Customer;
+import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
-import foodPanda.model.PandaOrder;
-import foodPanda.model.Restaurant;
 import foodPanda.service.impl.CustomerServiceImpl;
 import foodPanda.service.impl.RestaurantServiceImpl;
+import foodPanda.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * The Controller provides all the endpoints to be used by a customer from the frontend
@@ -26,15 +28,18 @@ public class CustomerController {
     @Autowired
     RestaurantServiceImpl restaurantServiceImpl;
 
+    @Autowired
+    UserServiceImpl userServiceImpl;
+
     /**
      * Registers a new customer in the DB with the information from the Customer parameter
      *
-     * @param customer The body of the request converted to a Customer {email, password, name, address, locationZone} that has to be registered
+     * @param customerRegister The body of the request converted to a CustomerRegister {customer: {email, password, name, address, locationZone}, user: {email, password}} that has to be registered
      * @return A ResponseEntity object with the newly created Customer(HTTPStatus.CREATED) or an error otherwise
      */
     @PostMapping("register")
-    public ResponseEntity<Customer> register(@RequestBody(required = false) Customer customer) {
-        return new ResponseEntity<>(customerServiceImpl.save(customer), HttpStatus.CREATED);
+    public ResponseEntity<Customer> register(@RequestBody(required = false) CustomerRegister customerRegister) {
+        return new ResponseEntity<>(customerServiceImpl.save(customerRegister), HttpStatus.CREATED);
     }
 
     /**
@@ -83,5 +88,10 @@ public class CustomerController {
     @GetMapping("fetchOrders")
     public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForCustomer(@RequestParam(name = "customerId") Long customerId) throws InvalidInputException {
         return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(customerServiceImpl.fetchOrdersForCustomer(customerId)).build(), HttpStatus.OK);
+    }
+
+    @GetMapping("refreshToken")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        userServiceImpl.refreshToken(request, response);
     }
 }

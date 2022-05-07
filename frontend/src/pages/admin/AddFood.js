@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import Select from "react-select";
-import {addFood, fetchMenu} from "../../api/adminAPI";
+import {addFood, fetchMenu, refreshToken} from "../../api/adminAPI";
 import {get} from "../../utils/utils";
 import {Button, Card, Form, Nav} from "react-bootstrap";
 import addFoodBck from '../../res/addfood.jpg';
@@ -9,6 +9,7 @@ import {Helmet} from "react-helmet";
 
 
 function AddFood() {
+    const [tokens, setTokens] = useState(get("tokens"));
     const navigate = useNavigate();
     const [admin = {
         administrator: {},
@@ -61,9 +62,9 @@ function AddFood() {
     }
 
     function handleSubmit(event) {
-        addFood(category, food)
+        addFood(category, food, tokens.accessToken)
             .then(() => {
-                fetchMenu(restaurant)
+                fetchMenu(restaurant, tokens.accessToken)
                     .then(response => {
                         let newAdmin = {
                             ...admin,
@@ -76,11 +77,41 @@ function AddFood() {
                         window.location.reload(false);
                     })
                     .catch(error => {
-                        console.log(error)
+                        setError(error.response.data.message)
                     })
             })
             .catch(error => {
-                setError(error.response.data.message)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            console.warn(tokens)
+                            setTokens(tokens)
+                            localStorage.setItem("tokens", JSON.stringify(tokens))
+                            addFood(category, food, tokens.accessToken)
+                                .then(() => {
+                                    fetchMenu(restaurant, tokens.accessToken)
+                                        .then(response => {
+                                            let newAdmin = {
+                                                ...admin,
+                                                restaurant: {
+                                                    ...restaurant,
+                                                    menu: response
+                                                }
+                                            }
+                                            localStorage.setItem('admin-info', JSON.stringify(newAdmin));
+                                            window.location.reload(false);
+                                        })
+                                        .catch(error => {
+                                            setError(error.response.data.message)
+                                        })
+                                })
+                                .catch(error => {
+                                    setError(error.response.data.message)
+                                })
+                        })
+                } else {
+                    setError(error.response.data.message)
+                }
             });
         event.preventDefault();
     }
@@ -121,7 +152,16 @@ function AddFood() {
 
             <br/>
             <br/>
-            <Card style={{opacity: 0.85, left: 500, top: 50, width: 500, height: 600, backgroundColor: 'orange' , padding: 50, borderRadius: 38  }}>
+            <Card style={{
+                opacity: 0.85,
+                left: 500,
+                top: 50,
+                width: 500,
+                height: 600,
+                backgroundColor: 'orange',
+                padding: 50,
+                borderRadius: 38
+            }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Add a new food
                 </Card.Title>

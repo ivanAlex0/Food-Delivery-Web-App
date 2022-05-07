@@ -1,9 +1,9 @@
 import React, {useState} from "react";
-import {sendLogin} from "../../api/adminAPI";
+import {loginToken, sendLogin} from "../../api/adminAPI";
 import {useNavigate} from "react-router-dom";
 import {Button, Card, Form, Nav} from "react-bootstrap";
 import adminLogin from "../../res/admin_login.jpg";
-import { Helmet } from 'react-helmet'
+import {Helmet} from 'react-helmet'
 
 function AdminLogin() {
     localStorage.clear();
@@ -15,16 +15,23 @@ function AdminLogin() {
     const [error, setError] = useState('');
 
     function handleSubmit(event) {
-        sendLogin(accountDTO)
-            .then(adminData => {
-                localStorage.setItem('admin-info', JSON.stringify(adminData))
-                if (adminData.restaurant)
-                    navigate("/admin/menu");
-                else navigate("/admin/addRestaurant")
+        loginToken(accountDTO)
+            .then(tokens => {
+                localStorage.setItem("tokens", JSON.stringify(tokens))
+                sendLogin(accountDTO)
+                    .then(adminData => {
+                        localStorage.setItem('admin-info', JSON.stringify(adminData))
+                        if (adminData.restaurant)
+                            navigate("/admin/menu");
+                        else navigate("/admin/addRestaurant")
+                    })
+                    .catch(error => {
+                        setError(error.response.data.message)
+                    });
             })
             .catch(error => {
-                setError(error.response.data.message)
-            });
+                setError("Invalid credentials")
+            })
         event.preventDefault();
     }
 
@@ -40,9 +47,9 @@ function AdminLogin() {
 
     return (
         <div style={{height: 800, backgroundImage: 'url(' + adminLogin + ')', backgroundSize: 'cover'}}>
-           <Helmet>
-               <title>🍕 Admin | Login</title>
-           </Helmet>
+            <Helmet>
+                <title>🍕 Admin | Login</title>
+            </Helmet>
 
             <Nav
                 style={{
@@ -60,7 +67,15 @@ function AdminLogin() {
                 </Nav.Item>
             </Nav>
 
-            <Card style={{opacity: 0.85, left: 500, top: 130, width: 500, height: 475, backgroundColor: 'lightblue', padding: 50}}>
+            <Card style={{
+                opacity: 0.85,
+                left: 500,
+                top: 130,
+                width: 500,
+                height: 475,
+                backgroundColor: 'lightblue',
+                padding: 50
+            }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Login as admin
                 </Card.Title>
@@ -98,7 +113,9 @@ function AdminLogin() {
                     Don't have an account?
                 </text>
 
-                <Button style={{width: 100}} onClick={() => {navigate('/admin/register')}}>
+                <Button style={{width: 100}} onClick={() => {
+                    navigate('/admin/register')
+                }}>
                     Register
                 </Button>
             </Card>

@@ -1,21 +1,36 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {sendRegister} from "../../api/customerAPI";
-import {fetchZones} from "../../api/adminAPI";
+import {fetchZones, loginToken} from "../../api/adminAPI";
 import Select from "react-select";
 import {Button, Card, Form, Nav} from "react-bootstrap";
-import customerRegister from "../../res/customer_register.jpg";
+import customerRegisterImg from "../../res/customer_register.jpg";
 import {Helmet} from "react-helmet";
 
 function CustomerRegister() {
     localStorage.clear();
     const [customer, setCustomer] = useState({
-        email: '',
-        password: '',
         name: '',
         address: '',
         addressZone: {
             id: null
+        }
+    });
+    const [user, setUser] = useState({
+        email: '',
+        password: '',
+    });
+    const [customerRegister, setCustomerRegister] = useState({
+        customer: {
+            name: '',
+            address: '',
+            addressZone: {
+                id: null
+            }
+        },
+        user: {
+            email: '',
+            password: '',
         }
     });
     const [zones, setZones] = useState([]);
@@ -33,9 +48,9 @@ function CustomerRegister() {
             });
     }, [])
 
-    function handleChange(event) {
+    function handleChangeUser(event) {
         const {name, value} = event.target
-        setCustomer(prevState => {
+        setUser(prevState => {
             return {
                 ...prevState,
                 [name]: value
@@ -43,20 +58,39 @@ function CustomerRegister() {
         })
     }
 
-    function handleSelect(selected) {
+    function handleChangeCustomer(event) {
+        const {name, value} = event.target
         setCustomer(prevState => {
             return {
                 ...prevState,
-                'addressZone': selected.value
+                [name]: value
             };
         })
+        setCustomerRegister(
+            {
+                customer: customer,
+                user: user
+            }
+        )
+    }
+
+    async function handleSelect(selected) {
+        setCustomerRegister(
+            {
+                customer: {
+                    ...customer,
+                    'addressZone': selected.value
+                },
+                user: user
+            }
+        )
     }
 
     function handleSubmit(event) {
-        sendRegister(customer)
+        sendRegister(customerRegister)
             .then(response => {
                 localStorage.setItem('customer-info', JSON.stringify(response));
-                navigate('/customer/home');
+                navigate('/customer/login');
             })
             .catch(error => {
                 setError(error.response.data.message)
@@ -65,7 +99,7 @@ function CustomerRegister() {
     }
 
     return (
-        <div style={{height: 850, backgroundImage: 'url(' + customerRegister + ')', backgroundSize: 'cover'}}>
+        <div style={{height: 850, backgroundImage: 'url(' + customerRegisterImg + ')', backgroundSize: 'cover'}}>
             <Helmet>
                 <title>🍔 Customer | Register</title>
             </Helmet>
@@ -90,7 +124,15 @@ function CustomerRegister() {
             <br/>
             <br/>
 
-            <Card style={{opacity: 0.85, left: 500, top: 5, width: 500, height: 750, backgroundColor: 'darkcyan', padding: 50}}>
+            <Card style={{
+                opacity: 0.85,
+                left: 500,
+                top: 5,
+                width: 500,
+                height: 750,
+                backgroundColor: 'darkcyan',
+                padding: 50
+            }}>
                 <Card.Title style={{justifyContent: 'center', display: 'flex', color: '#000', fontSize: 40}}>
                     Register as customer
                 </Card.Title>
@@ -102,7 +144,7 @@ function CustomerRegister() {
                             name={'email'}
                             type={'email'}
                             placeholder={'Enter email...'}
-                            onChange={handleChange}/>
+                            onChange={handleChangeUser}/>
                     </Form.Group>
 
                     <Form.Group className={'mb-3'}>
@@ -111,7 +153,7 @@ function CustomerRegister() {
                             name={'password'}
                             type={'password'}
                             placeholder={'Enter password...'}
-                            onChange={handleChange}/>
+                            onChange={handleChangeUser}/>
                     </Form.Group>
 
                     <Form.Group className={'mb-3'}>
@@ -120,7 +162,7 @@ function CustomerRegister() {
                             name={'name'}
                             type={'text'}
                             placeholder={'Enter name...'}
-                            onChange={handleChange}/>
+                            onChange={handleChangeCustomer}/>
                     </Form.Group>
 
                     <Form.Group className={'mb-3'}>
@@ -129,7 +171,7 @@ function CustomerRegister() {
                             name={'address'}
                             type={'text'}
                             placeholder={'Enter address...'}
-                            onChange={handleChange}/>
+                            onChange={handleChangeCustomer}/>
                     </Form.Group>
 
                     <Form.Group className={'mb-3'}>

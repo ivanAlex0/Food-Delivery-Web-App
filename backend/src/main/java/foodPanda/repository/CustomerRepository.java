@@ -1,6 +1,7 @@
 package foodPanda.repository;
 
 import foodPanda.model.Customer;
+import foodPanda.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,11 +22,11 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findById(Long idAccount);
 
     /**
-     * Finds a Customer by its email
+     * Finds a Customer that corresponds to a User
      *
-     * @param email The email to be searched
+     * @param user The User that corresponds to the Customer we're searching
      * @return The Customer instance wrapped in an {@link Optional}
      */
-    Optional<Customer> findByEmail(String email);
+    Optional<Customer> findByUser(User user);
 
 }

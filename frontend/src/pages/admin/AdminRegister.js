@@ -18,7 +18,7 @@ function AdminRegister() {
         sendRegister(accountDTO)
             .then(response => {
                 localStorage.setItem('admin-info', JSON.stringify(response));
-                navigate('/admin/addRestaurant');
+                navigate('/admin/login');
             })
             .catch(error => {
                 setError(error.response.data.message)

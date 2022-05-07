@@ -8,6 +8,8 @@ import foodPanda.model.states.State;
 import foodPanda.repository.*;
 import foodPanda.service.services.CustomerService;
 import foodPanda.service.utils.Validator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +22,8 @@ import java.util.List;
  */
 @Service
 public class CustomerServiceImpl implements CustomerService {
+
+    private final static Logger LOGGER = LogManager.getLogger(CustomerServiceImpl.class);
 
     @Autowired
     CustomerRepository customerRepository;
@@ -39,6 +43,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     StateRepository stateRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     /**
      * The singleton Validator instance which is used to validate the input received from the controller
      */
@@ -49,35 +56,41 @@ public class CustomerServiceImpl implements CustomerService {
      * The actual entity which is saved is built using {@link lombok.Builder} from the {@link lombok.Lombok} library
      * The password is encoded before saving it into the DB using {@link BCrypt}'s {@link BCrypt#hashpw(String, String)}
      *
-     * @param customer The Customer entity which is saved in the DB
+     * @param customerRegister The Customer entity which is saved in the DB
      * @return The newly saved Customer entity which is enhanced with the customerId field
      * @throws InvalidInputException Whenever some input is missing(Bad Request) or the email or password are not valid. It also throws it when the name and address are empty strings.
      */
     @Override
-    public Customer save(Customer customer) throws InvalidInputException {
-        if (customer == null || customer.getEmail() == null || customer.getPassword() == null || customer.getName() == null || customer.getAddress() == null || customer.getAddressZone() == null || customer.getAddressZone().getId() == null)
+    public Customer save(CustomerRegister customerRegister) throws InvalidInputException {
+        System.out.println(customerRegister);
+        if (customerRegister == null || customerRegister.getUser().getEmail() == null || customerRegister.getUser().getPassword() == null || customerRegister.getCustomer().getName() == null || customerRegister.getCustomer().getAddress() == null || customerRegister.getCustomer().getAddressZone() == null || customerRegister.getCustomer().getAddressZone().getId() == null)
             throw new InvalidInputException("You request body is not a valid Customer object. Please refer to the documentation!");
-        if (!validator.isEmailValid(customer.getEmail()))
+        if (!validator.isEmailValid(customerRegister.getUser().getEmail()))
             throw new InvalidInputException("Email is not valid! It should be a valid email(eg. foodpanda@glovo.com");
-        if (!validator.isPasswordValid(customer.getPassword()))
+        if (!validator.isPasswordValid(customerRegister.getUser().getPassword()))
             throw new InvalidInputException("Password does not meet the requirements\n-At least 8 characters long\n-At least a digit\nAt least a letter");
-        if (customer.getName().isEmpty())
+        if (customerRegister.getCustomer().getName().isEmpty())
             throw new InvalidInputException("Customer {email} must not be null");
-        if (customer.getAddress().isEmpty())
+        if (customerRegister.getCustomer().getAddress().isEmpty())
             throw new InvalidInputException("Customer {email} must not be null");
 
         try {
+            User _user = userRepository.save(
+                    User
+                            .builder()
+                            .email(customerRegister.getUser().getEmail())
+                            .password(BCrypt.hashpw(customerRegister.getUser().getPassword(), BCrypt.gensalt()))
+                            .build());
             Customer _customer = customerRepository.save(
                     Customer
                             .builder()
-                            .name(customer.getName())
-                            .address(customer.getAddress())
-                            .email(customer.getEmail())
-                            .password(BCrypt.hashpw(customer.getPassword(), BCrypt.gensalt()))
-                            .addressZone(customer.getAddressZone())
+                            .name(customerRegister.getCustomer().getName())
+                            .address(customerRegister.getCustomer().getAddress())
+                            .addressZone(customerRegister.getCustomer().getAddressZone())
+                            .user(_user)
                             .build()
             );
-            _customer.setPassword("********");
+            LOGGER.info("New customer saved with customerId=" + _customer.getCustomerId());
             return _customer;
         } catch (DataIntegrityViolationException dataIntegrityViolationException) {
             throw new DuplicateEntryException("Email is already registered! Try to login");
@@ -97,12 +110,13 @@ public class CustomerServiceImpl implements CustomerService {
         if (accountDTO == null || accountDTO.getCredential() == null || accountDTO.getPassword() == null)
             throw new InvalidInputException("You request body is not a valid Customer object. Please refer to the documentation!");
 
-        Customer _customer = customerRepository.findByEmail(accountDTO.getCredential()).orElseThrow(
+        User _user = userRepository.findByEmail(accountDTO.getCredential()).orElseThrow(
                 () -> new InvalidInputException("Invalid credentials")
         );
-        if (BCrypt.checkpw(accountDTO.getPassword(), _customer.getPassword())) {
-            _customer.setPassword("********");
-            return _customer;
+        if (BCrypt.checkpw(accountDTO.getPassword(), _user.getPassword())) {
+            return customerRepository.findByUser(_user).orElseThrow(
+                    () -> new InvalidInputException("Are you trying to log in as an admin?")
+            );
         } else throw new InvalidInputException("Invalid credentials");
     }
 
@@ -129,11 +143,17 @@ public class CustomerServiceImpl implements CustomerService {
             throw new InvalidInputException("The order's list of {product} is empty (size == 0)");
 
         Customer _customer = customerRepository.findById(customerId).orElseThrow(
-                () -> new InvalidInputException("No customer found for customerId=" + customerId)
+                () -> {
+                    LOGGER.error("No customer found for customerId=" + customerId);
+                    throw new InvalidInputException("No customer found for customerId=" + customerId);
+                }
         );
 
         Restaurant _restaurant = restaurantRepository.findById(restaurantId).orElseThrow(
-                () -> new InvalidInputException("No restaurant found for restaurantId=" + restaurantId)
+                () -> {
+                    LOGGER.error("No restaurant found for restaurantId=" + restaurantId);
+                    throw new InvalidInputException("No restaurant found for restaurantId=" + restaurantId);
+                }
         );
 
         if (!_restaurant.getDeliveryZones().contains(_customer.getAddressZone()))
@@ -165,6 +185,7 @@ public class CustomerServiceImpl implements CustomerService {
                             .build()
             );
         }
+        LOGGER.info("New pandaOrder placed with pandaOrderId=" + _pandaOrder.getOrderId());
         return _pandaOrder;
     }
 

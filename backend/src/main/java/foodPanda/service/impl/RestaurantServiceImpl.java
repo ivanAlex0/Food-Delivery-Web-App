@@ -5,6 +5,8 @@ import foodPanda.model.Menu;
 import foodPanda.model.Restaurant;
 import foodPanda.repository.RestaurantRepository;
 import foodPanda.service.services.RestaurantService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,8 @@ import java.util.List;
  */
 @Service
 public class RestaurantServiceImpl implements RestaurantService {
+
+    private static final Logger LOGGER = LogManager.getLogger(RestaurantServiceImpl.class);
 
     @Autowired
     RestaurantRepository restaurantRepository;
@@ -32,7 +36,10 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new InvalidInputException("Restaurant id cannot be null.");
 
         return restaurantRepository.findById(restaurantId).orElseThrow(
-                () -> new RuntimeException("No restaurant found for restaurantId=" + restaurantId)
+                () -> {
+                    LOGGER.error("No restaurant found for restaurantId=" + restaurantId);
+                    throw new RuntimeException("No restaurant found for restaurantId=" + restaurantId);
+                }
         ).getMenu();
     }
 

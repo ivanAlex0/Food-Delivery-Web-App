@@ -16,6 +16,19 @@ async function sendLogin(accountDTO) {
     return await response.data;
 }
 
+async function loginToken(accountDTO) {
+    const params = new URLSearchParams()
+    params.append('username', accountDTO.credential)
+    params.append('password', accountDTO.password)
+    const response = await axios(
+        {
+            method: 'POST',
+            url: 'http://localhost:8080/api/login',
+            params: params
+        });
+    return await response.data;
+}
+
 async function sendRegister(accountDTO) {
     const response = await axios(
         {
@@ -39,7 +52,7 @@ async function fetchZones() {
     return await response.data.response;
 }
 
-async function addRestaurant(adminId, restaurant) {
+async function addRestaurant(adminId, restaurant, accessToken) {
     const response = await axios(
         {
             method: 'post',
@@ -49,13 +62,14 @@ async function addRestaurant(adminId, restaurant) {
                 id: adminId
             },
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
             }
         });
     return await response.data;
 }
 
-async function addFood(category, food) {
+async function addFood(category, food, accessToken) {
     const response = await axios(
         {
             method: 'post',
@@ -65,13 +79,15 @@ async function addFood(category, food) {
                 categoryId: category.categoryId
             },
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+
             }
         });
     return await response.data;
 }
 
-async function fetchMenu(restaurant) {
+async function fetchMenu(restaurant, accessToken) {
     const response = await axios(
         {
             method: 'get',
@@ -80,13 +96,14 @@ async function fetchMenu(restaurant) {
                 restaurantId: restaurant.restaurantId
             },
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
             }
         });
     return await response.data;
 }
 
-async function changeStatus(order) {
+async function changeStatus(order, accessToken) {
     const response = await axios(
         {
             method: 'POST',
@@ -94,13 +111,16 @@ async function changeStatus(order) {
             params: {
                 orderId: order.orderId,
                 status: order.state.orderStatus
+            },
+            headers: {
+                'Authorization': 'Bearer ' + accessToken
             }
         }
     );
     return await response.data;
 }
 
-async function fetchOrders(restaurant) {
+async function fetchOrders(restaurant, accessToken) {
     const response = await axios(
         {
             method: 'get',
@@ -109,10 +129,35 @@ async function fetchOrders(restaurant) {
                 restaurantId: restaurant.restaurantId
             },
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
             }
         });
     return await response.data;
 }
 
-export {fetchZones, addRestaurant, sendLogin, addFood, fetchMenu, sendRegister, changeStatus, fetchOrders, path}
+async function refreshToken(refreshToken) {
+    const response = await axios(
+        {
+            method: 'get',
+            url: path + 'refreshToken',
+            headers: {
+                'Authorization': 'Bearer ' + refreshToken
+            }
+        });
+    return await response.data;
+}
+
+export {
+    refreshToken,
+    fetchZones,
+    addRestaurant,
+    loginToken,
+    sendLogin,
+    addFood,
+    fetchMenu,
+    sendRegister,
+    changeStatus,
+    fetchOrders,
+    path
+}

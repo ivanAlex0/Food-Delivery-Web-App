@@ -6,8 +6,10 @@ import Select from "react-select";
 import {Button, Card, Nav} from "react-bootstrap";
 import background from "../../res/restaurant.jpg";
 import {Helmet} from "react-helmet";
+import {refreshToken} from "../../api/adminAPI";
 
 function CustomerHome() {
+    const [tokens, setTokens] = useState(get("tokens"))
     const [customer = {
         customerId: null,
         email: '',
@@ -44,12 +46,26 @@ function CustomerHome() {
             }
         }
 
-        fetchRestaurants()
+        fetchRestaurants(tokens.accessToken)
             .then(response => {
                 setRestaurants(response.response)
             })
             .catch(error => {
-                console.warn(error)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem("tokens", JSON.stringify(tokens))
+                            fetchRestaurants(tokens.accessToken)
+                                .then(response => {
+                                    setRestaurants(response.response)
+                                })
+                                .catch(error => {
+                                    console.warn(error)
+                                })
+                        })
+                } else
+                    console.warn(error)
             });
     }, [])
 

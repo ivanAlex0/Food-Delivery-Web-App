@@ -4,8 +4,10 @@ import {sendOrder} from "../../api/customerAPI";
 import {Button, Card, Nav} from "react-bootstrap";
 import {Helmet} from "react-helmet";
 import cart from "../../res/cart.jpg";
+import {refreshToken} from "../../api/adminAPI";
 
 function CustomerCart() {
+    const [tokens, setTokens] = useState(get("tokens"))
     const [customer = {
         customerId: null,
         email: '',
@@ -46,13 +48,28 @@ function CustomerCart() {
     }
 
     function handleSubmit() {
-        sendOrder(order, customer.customerId, currentRestaurant.restaurantId)
+        sendOrder(order, customer.customerId, currentRestaurant.restaurantId, tokens.accessToken)
             .then(() => {
                 setError('Your order has successfully been sent to the ' + currentRestaurant.name + ' restaurant');
             })
             .catch(error => {
-                setError(error.response.data.message)
+                if (error.response.status === 403) {
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem("tokens", JSON.stringify(tokens))
+                            sendOrder(order, customer.customerId, currentRestaurant.restaurantId, tokens.accessToken)
+                                .then(() => {
+                                    setError('Your order has successfully been sent to the ' + currentRestaurant.name + ' restaurant');
+                                })
+                                .catch(error => {
+                                    setError(error.response.data.message)
+                                })
+                        })
+                } else
+                    setError(error.response.data.message)
             })
+        setOrder(null)
         setProducts([])
         localStorage.setItem('current-restaurant', null)
         localStorage.setItem('cart-products', null)

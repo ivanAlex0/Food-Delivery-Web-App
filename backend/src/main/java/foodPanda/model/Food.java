@@ -7,7 +7,6 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Data
 @Builder
 @Getter
 @Setter
@@ -33,6 +32,7 @@ public class Food {
     @JoinColumn(name = "category_id", referencedColumnName = "categoryId")
     private Category category;
 
+    @JsonIgnore
     @ManyToMany
     private List<Food> foodList;
 }

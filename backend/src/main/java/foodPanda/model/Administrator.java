@@ -11,7 +11,6 @@ import javax.persistence.*;
 @Setter
 @Builder
 @NoArgsConstructor
-@RequiredArgsConstructor
 @AllArgsConstructor
 public class Administrator {
 
@@ -19,12 +18,9 @@ public class Administrator {
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "admin_generator")
     private Long adminId;
 
-    @NonNull
-    @Column(name = "email", unique = true, nullable = false)
-    private String email;
-
-    @NonNull
-    private String password;
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @OneToOne(cascade = CascadeType.ALL,
             fetch = FetchType.LAZY,
