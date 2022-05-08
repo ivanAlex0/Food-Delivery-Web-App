@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {get} from "../../utils/utils";
 import {sendOrder} from "../../api/customerAPI";
-import {Button, Card, Nav} from "react-bootstrap";
+import {Button, Card, Form, Nav} from "react-bootstrap";
 import {Helmet} from "react-helmet";
 import cart from "../../res/cart.jpg";
 import {refreshToken} from "../../api/adminAPI";
@@ -23,12 +23,18 @@ function CustomerCart() {
         products: []
     });
     const [error, setError] = useState('');
+    const [details, setDetails] = useState('')
 
     useEffect(() => {
         setOrder({
             products: products
         });
     }, [])
+
+    function handleChange(event) {
+        let {value} = event.target
+        setDetails(value)
+    }
 
     function handleAddQuantity(item, value) {
         const index = products.findIndex(function (element) {
@@ -48,7 +54,7 @@ function CustomerCart() {
     }
 
     function handleSubmit() {
-        sendOrder(order, customer.customerId, currentRestaurant.restaurantId, tokens.accessToken)
+        sendOrder(order, customer.customerId, currentRestaurant.restaurantId, details, tokens.accessToken)
             .then(() => {
                 setError('Your order has successfully been sent to the ' + currentRestaurant.name + ' restaurant');
             })
@@ -58,7 +64,7 @@ function CustomerCart() {
                         .then(tokens => {
                             setTokens(tokens)
                             localStorage.setItem("tokens", JSON.stringify(tokens))
-                            sendOrder(order, customer.customerId, currentRestaurant.restaurantId, tokens.accessToken)
+                            sendOrder(order, customer.customerId, currentRestaurant.restaurantId, details, tokens.accessToken)
                                 .then(() => {
                                     setError('Your order has successfully been sent to the ' + currentRestaurant.name + ' restaurant');
                                 })
@@ -108,6 +114,15 @@ function CustomerCart() {
             <br/>
             <br/>
             <br/>
+
+            <Form.Group className={'mb-3'}>
+                <Form.Label style={{justifyContent: 'center', display: 'flex'}}>Additional Details</Form.Label>
+                <Form.Control
+                    name={'details'}
+                    type={'text'}
+                    placeholder={'Enter additional details...'}
+                    onChange={handleChange}/>
+            </Form.Group>
 
             {
                 products?.map(product => {

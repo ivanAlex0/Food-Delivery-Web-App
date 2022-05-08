@@ -100,7 +100,6 @@ public class UserServiceImpl implements UserDetailsService {
                 LOGGER.info("New Access Token generated for user with email: " + user.getEmail() + " and roles: " + authorities);
             } catch (Exception e) {
                 LOGGER.error("Error logging in -> {}", e.getMessage());
-                LOGGER.error("Token -> {}", authorisationHeader);
                 response.setHeader("error", e.getMessage());
                 response.setStatus(HttpStatus.FORBIDDEN.value());
                 Map<String, String> error = new HashMap<>();

@@ -48,6 +48,7 @@ public class AdministratorController {
      */
     @PostMapping("register")
     public ResponseEntity<Administrator> register(@RequestBody(required = false) AccountDTO accountDTO) throws InvalidInputException {
+        LOGGER.info("New register request with email=" + accountDTO.getCredential());
         return new ResponseEntity<>(administratorServiceImpl.saveAdministrator(accountDTO), HttpStatus.CREATED);
     }
 
@@ -60,6 +61,7 @@ public class AdministratorController {
      */
     @PostMapping("auth")
     public ResponseEntity<Administrator> authenticate(@RequestBody AccountDTO accountDTO) throws InvalidCredentialsException {
+        LOGGER.info("New authentication request with email=" + accountDTO.getCredential());
         return new ResponseEntity<>(administratorServiceImpl.authenticate(accountDTO), HttpStatus.OK);
     }
 
@@ -73,6 +75,7 @@ public class AdministratorController {
      */
     @PostMapping("addRestaurant")
     public ResponseEntity<Restaurant> addRestaurant(@RequestParam(name = "id") long adminId, @RequestBody Restaurant restaurant) throws InvalidInputException {
+        LOGGER.info("New addRestaurant request for adminId=" + adminId);
         return new ResponseEntity<>(administratorServiceImpl.addRestaurant(adminId, restaurant), HttpStatus.CREATED);
     }
 
@@ -85,6 +88,7 @@ public class AdministratorController {
      */
     @PostMapping("addFood")
     public ResponseEntity<Food> addFood(@RequestParam(name = "categoryId", required = false) Long categoryId, @RequestBody(required = false) Food food) {
+        LOGGER.info("New addFood request with categoryId=" + categoryId);
         return new ResponseEntity<>(administratorServiceImpl.addFoodForCategory(categoryId, food), HttpStatus.CREATED);
     }
 
@@ -97,6 +101,7 @@ public class AdministratorController {
      */
     @GetMapping("fetchMenu")
     public ResponseEntity<Menu> fetchMenu(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws RuntimeException {
+        LOGGER.info("New fetchMenu request with restaurantId=" + restaurantId);
         return new ResponseEntity<>(restaurantServiceImpl.fetchMenu(restaurantId), HttpStatus.OK);
     }
 
@@ -120,6 +125,7 @@ public class AdministratorController {
      */
     @PostMapping("changeStatus")
     public ResponseEntity<PandaOrder> changeOrderStatus(@RequestParam(name = "orderId", required = false) Long orderId, @RequestParam(name = "status", required = false) OrderStatus newStatus) throws InvalidInputException {
+        LOGGER.info("New changeOrderStatus request with orderId=" + orderId);
         return new ResponseEntity<>(administratorServiceImpl.changeOrderStatus(orderId, newStatus), HttpStatus.OK);
     }
 
@@ -132,16 +138,31 @@ public class AdministratorController {
      */
     @GetMapping("fetchOrders")
     public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForRestaurant(@RequestParam(name = "restaurantId", required = false) Long restaurantId) throws InvalidInputException {
+        LOGGER.info("New fetchOrdersForRestaurant request with restaurantId=" + restaurantId);
         return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(administratorServiceImpl.fetchOrders(restaurantId)).build(), HttpStatus.OK);
     }
 
+    /**
+     * Generates a PDF containing the Restaurant's Menu corresponding to the admin with adminId provided
+     *
+     * @param adminId The Admin that manages the Restaurant
+     */
     @GetMapping("generatePDF")
     public void generateMenuPDF(@RequestParam(name = "adminId", required = false) Long adminId) {
+        LOGGER.info("New generateMenuPDF request with adminId=" + adminId);
         administratorServiceImpl.generateMenuPDF(adminId);
     }
 
+    /**
+     * The method provides the user with a new accessToken whenever it expires by using the already provided refreshToken
+     *
+     * @param request  The HTTP request
+     * @param response The HTTP response
+     * @throws IOException Whenever something didn't work well - request writing / token generation
+     */
     @GetMapping("refreshToken")
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        LOGGER.info("New refreshToken request");
         userServiceImpl.refreshToken(request, response);
     }
 }

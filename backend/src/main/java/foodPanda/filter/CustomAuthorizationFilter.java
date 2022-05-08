@@ -65,7 +65,6 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                     LOGGER.info("Granted authorization for user with email: " + username + " for roles: " + authorities);
                 } catch (Exception e) {
                     LOGGER.error("Error logging in -> {}", e.getMessage());
-                    LOGGER.error("Token -> {}", authorisationHeader);
                     response.setHeader("error", e.getMessage());
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     //response.sendError(HttpStatus.FORBIDDEN.value());

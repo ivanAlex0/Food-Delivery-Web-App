@@ -43,7 +43,7 @@ export async function fetchRestaurants(accessToken) {
     return await response.data;
 }
 
-export async function sendOrder(order, customerId, restaurantId, accessToken) {
+export async function sendOrder(order, customerId, restaurantId, details, accessToken) {
     const response = await axios(
         {
             method: 'POST',
@@ -55,7 +55,8 @@ export async function sendOrder(order, customerId, restaurantId, accessToken) {
             data: JSON.stringify(order),
             params: {
                 customerId: customerId,
-                restaurantId: restaurantId
+                restaurantId: restaurantId,
+                details: details
             }
         }
     );

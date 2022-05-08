@@ -39,7 +39,7 @@ public interface CustomerService {
      * @param order        The actual information of the PandaOrder which is saved
      * @return The newly saved PandaOrder enhanced with the orderId field
      */
-    PandaOrder placeOrder(Long restaurantId, Long customerId, PandaOrder order);
+    PandaOrder placeOrder(Long restaurantId, Long customerId, String details, PandaOrder order);
 
     /**
      * Fetches all {@link PandaOrder}s that were placed by a certain {@link Customer}
@@ -48,4 +48,6 @@ public interface CustomerService {
      * @return A list of PandaOrders
      */
     List<PandaOrder> fetchOrdersForCustomer(Long customerId);
+
+    void sendMail(Customer customer, PandaOrder order, String details);
 }

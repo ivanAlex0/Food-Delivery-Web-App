@@ -1,6 +1,7 @@
 package foodPanda.service.impl;
 
 import foodPanda.exception.DuplicateEntryException;
+import foodPanda.exception.InvalidCredentialsException;
 import foodPanda.exception.InvalidInputException;
 import foodPanda.model.*;
 import foodPanda.model.DTOs.AccountDTO;
@@ -42,12 +43,16 @@ public class AdministratorServiceImplTest {
     @Mock
     StateRepository stateRepository;
 
+    @Mock
+    UserRepository userRepository;
+
     @InjectMocks
     AdministratorServiceImpl administratorServiceImpl;
 
     private final Long adminId = 111L;
     private final Long categoryId = 112L;
     private final Long orderId = 113L;
+    private final Long zoneId = 114L;
 
     @Test(expected = InvalidInputException.class)
     public void testSaveAdministrator_invalidCredentials() {
@@ -61,14 +66,15 @@ public class AdministratorServiceImplTest {
         administratorServiceImpl.saveAdministrator(validAccountDTOObject());
     }
 
-    /*@Test
+    @Test
     public void testSaveAdministrator_success() {
         AccountDTO accountDTO = validAccountDTOObject();
         Mockito.when(administratorRepository.save(Mockito.any())).thenReturn(administratorObjectReturned());
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(userObjectReturned());
 
         Administrator _admin = administratorServiceImpl.saveAdministrator(accountDTO);
 
-        Assertions.assertEquals(_admin.getEmail(), accountDTO.getCredential());
+        Assertions.assertEquals(_admin.getUser().getEmail(), accountDTO.getCredential());
     }
 
     @Test(expected = InvalidInputException.class)
@@ -78,27 +84,27 @@ public class AdministratorServiceImplTest {
 
     @Test(expected = InvalidCredentialsException.class)
     public void testAuthenticate_notFound() {
-        Mockito.when(administratorRepository.findByEmail(Mockito.any())).thenReturn(Optional.empty());
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.empty());
 
         administratorServiceImpl.authenticate(validAccountDTOObjectBadPassword());
     }
 
     @Test(expected = InvalidInputException.class)
     public void testAuthenticate_invalidPassword() {
-        Mockito.when(administratorRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(administratorObjectReturned()));
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(userObjectReturned()));
 
         administratorServiceImpl.authenticate(validAccountDTOObjectBadPassword());
     }
 
     @Test
     public void testAuthenticate_success() {
-        Mockito.when(administratorRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(administratorObjectReturned()));
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(userObjectReturned()));
+        Mockito.when(administratorRepository.findByUser(Mockito.any())).thenReturn(Optional.of(administratorObjectReturned()));
 
         Administrator _administrator = administratorServiceImpl.authenticate(validAccountDTOObject());
 
-        Assertions.assertEquals("********", _administrator.getPassword());
-        Assertions.assertEquals(_administrator.getEmail(), administratorObjectReturned().getEmail());
-    }*/
+        Assertions.assertEquals(_administrator.getUser().getEmail(), administratorObjectReturned().getUser().getEmail());
+    }
 
     @Test(expected = RuntimeException.class)
     public void testAddRestaurant_invalidAdminId() {
@@ -151,7 +157,7 @@ public class AdministratorServiceImplTest {
 
         Food _food = administratorServiceImpl.addFoodForCategory(categoryId, validFoodObject());
 
-        Assertions.assertEquals(_food, validFoodObject());
+        Assertions.assertEquals(_food.getName(), validFoodObject().getName());
     }
 
     @Test(expected = RuntimeException.class)
@@ -190,8 +196,8 @@ public class AdministratorServiceImplTest {
     public AccountDTO validAccountDTOObject() {
         return AccountDTO
                 .builder()
-                .credential("customer@com")
-                .password("12345678Alex*")
+                .credential("email@com")
+                .password("admin1234")
                 .build();
     }
 
@@ -199,13 +205,22 @@ public class AdministratorServiceImplTest {
         return AccountDTO
                 .builder()
                 .credential("customer@com")
-                .password("12345678Alex")
+                .password("12345678")
                 .build();
     }
 
     public Administrator administratorObjectReturned() {
         return Administrator
                 .builder()
+                .user(userObjectReturned())
+                .build();
+    }
+
+    public User userObjectReturned() {
+        return User
+                .builder()
+                .email("email@com")
+                .password("$2a$10$zJK9g6.7F93J4YzvUo/NjOVLF5BIr0wK/lPFCXYy8hBIFkqqduvwK")
                 .build();
     }
 
@@ -224,7 +239,7 @@ public class AdministratorServiceImplTest {
                 .builder()
                 .name("restaurant")
                 .location("location")
-                .locationZone(new Zone())
+                .locationZone(Zone.builder().id(zoneId).name("name").build())
                 .deliveryZones(new ArrayList<>())
                 .build();
     }

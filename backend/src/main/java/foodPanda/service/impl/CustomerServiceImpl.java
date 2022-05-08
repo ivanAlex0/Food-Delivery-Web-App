@@ -15,7 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * This class implements the methods declared in the {@link CustomerService}
@@ -62,7 +66,6 @@ public class CustomerServiceImpl implements CustomerService {
      */
     @Override
     public Customer save(CustomerRegister customerRegister) throws InvalidInputException {
-        System.out.println(customerRegister);
         if (customerRegister == null || customerRegister.getUser().getEmail() == null || customerRegister.getUser().getPassword() == null || customerRegister.getCustomer().getName() == null || customerRegister.getCustomer().getAddress() == null || customerRegister.getCustomer().getAddressZone() == null || customerRegister.getCustomer().getAddressZone().getId() == null)
             throw new InvalidInputException("You request body is not a valid Customer object. Please refer to the documentation!");
         if (!validator.isEmailValid(customerRegister.getUser().getEmail()))
@@ -132,7 +135,7 @@ public class CustomerServiceImpl implements CustomerService {
      * @throws InvalidInputException Whenever some input is missing(Bad Request), the list of products has a size less than 1 or the Customer's zone isn't present in the list of delivery zones of the Restaurant
      */
     @Override
-    public PandaOrder placeOrder(Long restaurantId, Long customerId, PandaOrder order) throws InvalidInputException {
+    public PandaOrder placeOrder(Long restaurantId, Long customerId, String details, PandaOrder order) throws InvalidInputException {
         if (restaurantId == null)
             throw new InvalidInputException("Required request parameter {restaurantId} cannot be null or missing");
         if (customerId == null)
@@ -186,6 +189,8 @@ public class CustomerServiceImpl implements CustomerService {
             );
         }
         LOGGER.info("New pandaOrder placed with pandaOrderId=" + _pandaOrder.getOrderId());
+        if (_customer.getUser().getEmail().equals("ivan.alexandru20@yahoo.com"))
+            sendMail(_customer, _pandaOrder, details);
         return _pandaOrder;
     }
 
@@ -198,5 +203,69 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public List<PandaOrder> fetchOrdersForCustomer(Long customerId) {
         return pandaOrderRepository.findAllByCustomer_CustomerId(customerId);
+    }
+
+    @Override
+    public void sendMail(Customer customer, PandaOrder order, String details) {
+        String to = order.getRestaurant().getAdministrator().getUser().getEmail();
+
+        String from = customer.getUser().getEmail();
+
+
+        Properties properties = System.getProperties();
+
+        properties.put("mail.smtp.host", "smtp.mail.yahoo.com");
+        properties.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        properties.put("mail.smtp.ssl", "true");
+        properties.put("mail.smtp.auth", "true");
+
+        Session session = Session.getInstance(properties, new javax.mail.Authenticator() {
+
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(customer.getUser().getEmail(), "pvizhbyjyyrpyvye");
+            }
+
+        });
+
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(from));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+            message.setSubject("New Order!");
+
+            double total = order.getProducts()
+                    .stream()
+                    .mapToDouble(cartItem -> cartItem.getQuantity() * cartItem.getItem().getPrice())
+                    .sum();
+            StringBuilder content = new StringBuilder();
+            content
+                    .append("New order for your restaurant{")
+                    .append(order.getRestaurant().getName())
+                    .append("}\n\n\n")
+                    .append("Products:\n");
+            for (CartItem product : order.getProducts()) {
+                String name = product.getItem().getName();
+                String quantity = product.getQuantity().toString();
+                content.append(quantity)
+                        .append(" x ")
+                        .append(name)
+                        .append('\n');
+            }
+            content
+                    .append("--------\nTotal: ")
+                    .append(total)
+                    .append("\n--------\nAddress: ")
+                    .append(customer.getAddress())
+                    .append("\n--------\nDetails: ")
+                    .append(details);
+            message.setText(content.toString());
+
+            Transport.send(message);
+            LOGGER.info("Sent message successfully....");
+        } catch (MessagingException mex) {
+            mex.printStackTrace();
+            LOGGER.error("Unable to send mail to the administrator of restaurant: " + order.getRestaurant());
+        }
     }
 }

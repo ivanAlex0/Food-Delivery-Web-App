@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This class implements the methods declared in the {@link AdministratorService}
@@ -122,9 +123,13 @@ public class AdministratorServiceImpl implements AdministratorService {
         );
 
         if (BCrypt.checkpw(accountDTO.getPassword(), _user.getPassword())) {
-            return administratorRepository.findByUser(_user).orElseThrow(
-                    () -> new InvalidInputException("Are you trying to log in as a user?")
-            );
+            Optional<Administrator> _adminOpt = administratorRepository.findByUser(_user);
+            if (_adminOpt.isPresent()) {
+                Administrator _admin = _adminOpt.get();
+                _admin.getUser().setPassword("********");
+                return _admin;
+            } else
+                throw new InvalidInputException("Are you trying to log in as a user?");
         } else throw new InvalidInputException("Invalid credentials");
     }
 

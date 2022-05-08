@@ -148,7 +148,22 @@ async function refreshToken(refreshToken) {
     return await response.data;
 }
 
+async function generatePDF(admin, accessToken) {
+    const response = await axios({
+        method: 'get',
+        url: path + 'generatePDF',
+        headers:{
+            'Authorization': 'Bearer ' + accessToken
+        },
+        params: {
+            'adminId': admin.adminId
+        }
+    })
+    return await response.data;
+}
+
 export {
+    generatePDF,
     refreshToken,
     fetchZones,
     addRestaurant,

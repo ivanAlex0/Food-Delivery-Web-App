@@ -6,6 +6,8 @@ import foodPanda.model.DTOs.AccountDTO;
 import foodPanda.service.impl.CustomerServiceImpl;
 import foodPanda.service.impl.RestaurantServiceImpl;
 import foodPanda.service.impl.UserServiceImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import java.io.IOException;
 @RestController
 @RequestMapping("customer")
 public class CustomerController {
+
+    private final Logger LOGGER = LogManager.getLogger(CustomerController.class);
 
     @Autowired
     CustomerServiceImpl customerServiceImpl;
@@ -39,6 +43,7 @@ public class CustomerController {
      */
     @PostMapping("register")
     public ResponseEntity<Customer> register(@RequestBody(required = false) CustomerRegister customerRegister) {
+        LOGGER.info("New register request with email=" + customerRegister.getUser().getEmail());
         return new ResponseEntity<>(customerServiceImpl.save(customerRegister), HttpStatus.CREATED);
     }
 
@@ -50,6 +55,7 @@ public class CustomerController {
      */
     @PostMapping("auth")
     public ResponseEntity<Customer> authenticate(@RequestBody(required = false) AccountDTO accountDTO) {
+        LOGGER.info("New authentication request with email=" + accountDTO.getCredential());
         return new ResponseEntity<>(customerServiceImpl.authenticate(accountDTO), HttpStatus.OK);
     }
 
@@ -63,8 +69,9 @@ public class CustomerController {
      * @throws InvalidInputException Whenever some input is invalid missing, invalid or not found
      */
     @PostMapping("placeOrder")
-    public ResponseEntity<PandaOrder> placeOrder(@RequestParam(name = "restaurantId", required = false) Long restaurantId, @RequestParam(name = "customerId", required = false) Long customerId, @RequestBody(required = false) PandaOrder order) throws InvalidInputException {
-        return new ResponseEntity<>(customerServiceImpl.placeOrder(restaurantId, customerId, order), HttpStatus.CREATED);
+    public ResponseEntity<PandaOrder> placeOrder(@RequestParam(name = "restaurantId", required = false) Long restaurantId, @RequestParam(name = "customerId", required = false) Long customerId, @RequestParam(name = "details", required = false) String details, @RequestBody(required = false) PandaOrder order) throws InvalidInputException {
+        LOGGER.info("New placeOrder request with restaurantId=" + restaurantId + " and customerId=" + customerId);
+        return new ResponseEntity<>(customerServiceImpl.placeOrder(restaurantId, customerId, details, order), HttpStatus.CREATED);
     }
 
     /**
@@ -87,11 +94,20 @@ public class CustomerController {
      */
     @GetMapping("fetchOrders")
     public ResponseEntity<APIResponse<PandaOrder>> fetchOrdersForCustomer(@RequestParam(name = "customerId") Long customerId) throws InvalidInputException {
+        LOGGER.info("New fetchOrdersForCustomer request with customerId=" + customerId);
         return new ResponseEntity<>(APIResponse.<PandaOrder>builder().response(customerServiceImpl.fetchOrdersForCustomer(customerId)).build(), HttpStatus.OK);
     }
 
+    /**
+     * The method provides the user with a new accessToken whenever it expires by using the already provided refreshToken
+     *
+     * @param request  The HTTP request
+     * @param response The HTTP response
+     * @throws IOException Whenever something didn't work well - request writing / token generation
+     */
     @GetMapping("refreshToken")
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        LOGGER.info("New refreshToken request");
         userServiceImpl.refreshToken(request, response);
     }
 }

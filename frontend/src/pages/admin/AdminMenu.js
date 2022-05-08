@@ -4,8 +4,10 @@ import {foodList, get} from "../../utils/utils";
 import {useNavigate} from "react-router-dom";
 import background from '../../res/restaurant.jpg';
 import {Helmet} from "react-helmet";
+import {generatePDF, refreshToken} from "../../api/adminAPI";
 
 function AdminMenu() {
+    const [tokens, setTokens] = useState(get('tokens'))
     const [admin] = useState(get('admin-info'));
     const [restaurant] = useState(admin?.restaurant);
     const navigate = useNavigate();
@@ -15,6 +17,22 @@ function AdminMenu() {
         if (!admin)
             navigate('/admin/login')
     }, [])
+
+    function generatePDFFunction(){
+        generatePDF(admin, tokens.accessToken)
+            .then()
+            .catch(error => {
+                if(error.response.status === 403){
+                    refreshToken(tokens.refreshToken)
+                        .then(tokens => {
+                            setTokens(tokens)
+                            localStorage.setItem('tokens', JSON.stringify(tokens))
+                            generatePDF(admin, tokens.accessToken)
+                                .then()
+                        })
+                }
+            })
+    }
 
     return (
         <div>
@@ -45,6 +63,11 @@ function AdminMenu() {
             </Nav>
 
             <div style={{padding: 100, backgroundImage: 'url(' + background + ')', backgroundSize: 'contain'}}>
+
+                <button style={{backgroundColor: 'yellow'}}
+                onClick={() => generatePDFFunction()}>
+                    Generate PDF
+                </button>
 
                 <Card style={{
                     borderRadius: 45,

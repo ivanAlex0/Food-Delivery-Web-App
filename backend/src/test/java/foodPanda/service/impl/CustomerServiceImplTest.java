@@ -9,7 +9,6 @@ import foodPanda.repository.*;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
-import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -32,9 +31,6 @@ public class CustomerServiceImplTest {
     PandaOrderRepository pandaOrderRepository;
 
     @Mock
-    CategoryRepository categoryRepository;
-
-    @Mock
     StateRepository stateRepository;
 
     @Mock
@@ -42,6 +38,9 @@ public class CustomerServiceImplTest {
 
     @Mock
     CartItemRepository cartItemRepository;
+
+    @Mock
+    UserRepository userRepository;
 
     @InjectMocks
     CustomerServiceImpl customerServiceImpl;
@@ -52,72 +51,73 @@ public class CustomerServiceImplTest {
     private final Long customerId = 114L;
     private final Long foodId = 114L;
 
-    /*@Test(expected = InvalidInputException.class)
+    @Test(expected = InvalidInputException.class)
     public void testSaveCustomer_invalidInput() {
-        customerServiceImpl.save(invalidCustomerObject());
+        customerServiceImpl.save(invalidCustomerRegisterObject());
     }
 
     @Test(expected = DuplicateEntryException.class)
     public void testSaveCustomer_duplicateEntry() {
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(validUserObject());
         Mockito.when(customerRepository.save(Mockito.any())).thenThrow(DataIntegrityViolationException.class);
 
-        customerServiceImpl.save(validCustomerObject());
+        customerServiceImpl.save(validCustomerRegisterObject());
     }
 
     @Test
     public void testSaveCustomer_success() {
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(validUserObject());
         Mockito.when(customerRepository.save(Mockito.any())).thenReturn(validCustomerObject());
 
-        Customer _customer = customerServiceImpl.save(validCustomerObject());
+        Customer _customer = customerServiceImpl.save(validCustomerRegisterObject());
 
-        Assertions.assertEquals("********", _customer.getPassword());
-        Assertions.assertEquals(_customer.getEmail(), validCustomerObject().getEmail());
-    }*/
+        Assertions.assertEquals(_customer.getUser().getEmail(), validCustomerObject().getUser().getEmail());
+    }
 
     @Test(expected = InvalidInputException.class)
     public void testAuthenticate_invalidInput() {
         customerServiceImpl.authenticate(invalidAccountDTObject());
     }
 
-    /*@Test(expected = RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testAuthenticate_notFound() {
-        Mockito.when(customerRepository.findByEmail(Mockito.any())).thenReturn(Optional.empty());
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.empty());
 
         customerServiceImpl.authenticate(validAccountDTOObject());
     }
 
     @Test(expected = InvalidInputException.class)
     public void testAuthenticate_invalidPassword() {
-        Mockito.when(customerRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(validCustomerObject()));
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(validUserObject()));
 
         customerServiceImpl.authenticate(validAccountDTOObjectBadPassword());
     }
 
     @Test
     public void testAuthenticate_success() {
-        Mockito.when(customerRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(validCustomerObject()));
+        Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(Optional.of(validUserObject()));
+        Mockito.when(customerRepository.findByUser(Mockito.any())).thenReturn(Optional.of(validCustomerObject()));
 
         Customer _customer = customerServiceImpl.authenticate(validAccountDTOObject());
 
-        Assertions.assertEquals("********", _customer.getPassword());
-        Assertions.assertEquals(_customer.getEmail(), validCustomerObject().getEmail());
-    }*/
+        Assertions.assertEquals(_customer.getUser().getEmail(), validCustomerObject().getUser().getEmail());
+    }
 
     @Test(expected = InvalidInputException.class)
     public void testPlaceOrder_nullIds() {
-        customerServiceImpl.placeOrder(null, null, validPandaOrderObject(OrderStatus.PENDING));
+        customerServiceImpl.placeOrder(null, null, null, validPandaOrderObject(OrderStatus.PENDING));
     }
 
     @Test(expected = InvalidInputException.class)
     public void testPlaceOrder_invalidSize() {
-        customerServiceImpl.placeOrder(restaurantId, customerId, validPandaOrderObjectSizeZero(OrderStatus.PENDING));
+        customerServiceImpl.placeOrder(restaurantId, customerId, null, validPandaOrderObjectSizeZero(OrderStatus.PENDING));
     }
 
     @Test(expected = InvalidInputException.class)
     public void testPlaceOrder_customerNotFound() {
         Mockito.when(customerRepository.findById(Mockito.any())).thenReturn(Optional.empty());
 
-        customerServiceImpl.placeOrder(restaurantId, customerId, validPandaOrderObject(OrderStatus.PENDING));
+        customerServiceImpl.placeOrder(restaurantId, customerId, null, validPandaOrderObject(OrderStatus.PENDING));
     }
 
     @Test(expected = InvalidInputException.class)
@@ -125,7 +125,7 @@ public class CustomerServiceImplTest {
         Mockito.when(customerRepository.findById(Mockito.any())).thenReturn(Optional.of(validCustomerObject()));
         Mockito.when(restaurantRepository.findById(Mockito.any())).thenReturn(Optional.empty());
 
-        customerServiceImpl.placeOrder(restaurantId, customerId, validPandaOrderObject(OrderStatus.PENDING));
+        customerServiceImpl.placeOrder(restaurantId, customerId, null, validPandaOrderObject(OrderStatus.PENDING));
     }
 
     @Test(expected = InvalidInputException.class)
@@ -133,7 +133,7 @@ public class CustomerServiceImplTest {
         Mockito.when(customerRepository.findById(Mockito.any())).thenReturn(Optional.of(validCustomerObject()));
         Mockito.when(restaurantRepository.findById(Mockito.any())).thenReturn(Optional.of(validRestaurantObjectZeroZones()));
 
-        customerServiceImpl.placeOrder(restaurantId, customerId, validPandaOrderObject(OrderStatus.PENDING));
+        customerServiceImpl.placeOrder(restaurantId, customerId, null, validPandaOrderObject(OrderStatus.PENDING));
     }
 
     @Test
@@ -144,8 +144,10 @@ public class CustomerServiceImplTest {
         Mockito.when(stateRepository.findByOrderStatus(OrderStatus.PENDING)).thenReturn(State.builder().orderStatus(OrderStatus.PENDING).build());
         Mockito.when(foodRepository.findById(Mockito.any())).thenReturn(Optional.of(new Food()));
         Mockito.when(cartItemRepository.save(Mockito.any())).thenReturn(new CartItem());
+        CustomerServiceImpl customerService = Mockito.spy(customerServiceImpl);
+        Mockito.doNothing().when(customerService).sendMail(Mockito.any(), Mockito.any(), Mockito.any());
 
-        PandaOrder _pandaOrder = customerServiceImpl.placeOrder(restaurantId, customerId, validPandaOrderObject(OrderStatus.PENDING));
+        PandaOrder _pandaOrder = customerService.placeOrder(restaurantId, customerId, null, validPandaOrderObject(OrderStatus.PENDING));
 
         Assertions.assertEquals(_pandaOrder.getState().getOrderStatus(), OrderStatus.PENDING);
     }
@@ -170,7 +172,7 @@ public class CustomerServiceImplTest {
         return AccountDTO
                 .builder()
                 .credential("customer@com")
-                .password("12345678Alex!")
+                .password("admin1234")
                 .build();
     }
 
@@ -183,12 +185,37 @@ public class CustomerServiceImplTest {
                 .build();
     }
 
+    public User validUserObject() {
+        return User
+                .builder()
+                .email("email@com")
+                .password("$2a$10$zJK9g6.7F93J4YzvUo/NjOVLF5BIr0wK/lPFCXYy8hBIFkqqduvwK")
+                .build();
+    }
+
+    public CustomerRegister invalidCustomerRegisterObject() {
+        return CustomerRegister
+                .builder()
+                .user(validUserObject())
+                .customer(invalidCustomerObject())
+                .build();
+    }
+
+    public CustomerRegister validCustomerRegisterObject() {
+        return CustomerRegister
+                .builder()
+                .user(validUserObject())
+                .customer(validCustomerObject())
+                .build();
+    }
+
     public Customer validCustomerObject() {
         return Customer
                 .builder()
                 .addressZone(validZoneObject())
                 .name("name")
                 .address("address")
+                .user(validUserObject())
                 .build();
     }
 
